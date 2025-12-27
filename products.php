@@ -788,7 +788,7 @@ $options = get_option( 'theme_settings' ); ?>
                                 </div>
                                 <div class="special-offer-wrapper">
                                     <span class="special-offer">
-                                    <span>€</span><span id="price-1516"><?=sprintf("%01.2f", get_product_addon_price_for_display_custom($regularPrice + $pSizes["options"][0]["price"] + $pExtra1["options"][0]["price"] + $pExtra2["options"][0]["price"] + $pMaterials["options"][0]["price"]))?></span>
+                                    <span>€</span><span id="price-1516"><?=sprintf("%01.2f", get_product_addon_price_for_display_custom((float)$regularPrice + (float)$pSizes["options"][0]["price"] + (float)$pExtra1["options"][0]["price"] + (float)$pExtra2["options"][0]["price"] + (float)$pMaterials["options"][0]["price"]))?></span>
                                     </span>
                                     <div class="btw"><?php if($excl_btw){ ?>excl.<?php } else { ?>incl.<?php } ?> BTW</div>
                                 </div>
@@ -895,7 +895,7 @@ $options = get_option( 'theme_settings' ); ?>
                                 </div>
                                 <div class="special-offer-wrapper">
                                     <span class="special-offer">
-                                    <span>€</span><span id="price-11141"><?=sprintf("%01.2f", get_product_addon_price_for_display_custom($regularPrice + $pSizes["options"][0]["price"] + $pExtra1["options"][0]["price"] + $pExtra2["options"][0]["price"] + $pMaterials["options"][0]["price"]))?></span>
+                                    <span>€</span><span id="price-11141"><?=sprintf("%01.2f", get_product_addon_price_for_display_custom((float)$regularPrice + (float)$pSizes["options"][0]["price"] + (float)$pExtra1["options"][0]["price"] + (float)$pExtra2["options"][0]["price"] + (float)$pMaterials["options"][0]["price"]))?></span>
                                     </span>
                                     <div class="btw"><?php if($excl_btw){ ?>excl.<?php } else { ?>incl.<?php } ?> BTW</div>
                                 </div>
@@ -1000,7 +1000,7 @@ $options = get_option( 'theme_settings' ); ?>
                                 </div>
                                 <div class="special-offer-wrapper">
                                     <span class="special-offer">
-                                    <span>€</span><span id="price-251"><?=sprintf("%01.2f", get_product_addon_price_for_display_custom($regularPrice + $sizes["options"][0]["price"] + $extra1["options"][0]["price"] + $extra2["options"][0]["price"] + $materials["options"][0]["price"]))?></span>
+                                    <span>€</span><span id="price-251"><?=sprintf("%01.2f", get_product_addon_price_for_display_custom((float)$regularPrice + (float)$sizes["options"][0]["price"] + (float)$extra1["options"][0]["price"] + (float)$extra2["options"][0]["price"] + (float)$materials["options"][0]["price"]))?></span>
                                     </span>
                                     <div class="btw"><?php if($excl_btw){ ?>excl.<?php } else { ?>incl.<?php } ?> BTW</div>
                                 </div>
@@ -1105,7 +1105,7 @@ $options = get_option( 'theme_settings' ); ?>
                                 </div>
                                 <div class="special-offer-wrapper">
                                     <span class="special-offer">
-                                    <span>€</span><span id="price-6407"><?=sprintf("%01.2f", get_product_addon_price_for_display_custom($regularPrice + $pSizes["options"][0]["price"] + $pExtra1["options"][0]["price"] + $pExtra2["options"][0]["price"] + $pMaterials["options"][0]["price"]))?></span>
+                                    <span>€</span><span id="price-6407"><?=sprintf("%01.2f", get_product_addon_price_for_display_custom((float)$regularPrice + (float)$pSizes["options"][0]["price"] + (float)$pExtra1["options"][0]["price"] + (float)$pExtra2["options"][0]["price"] + (float)$pMaterials["options"][0]["price"]))?></span>
                                     </span>
                                     <div class="btw"><?php if($excl_btw){ ?>excl.<?php } else { ?>incl.<?php } ?> BTW</div>
                                 </div>
