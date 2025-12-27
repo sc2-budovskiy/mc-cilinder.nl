@@ -830,6 +830,7 @@ if($keyplanCart) {
                 <span class="lead">u kunt bij elke persoon of afdeling de naam aanpassen.</span>
             </div>
             <div id="select-user-departments" class="col-md-12 cilinder-count clearfix">
+                <?php $keyUsersCount = 8; // Initialize default value for PHP 8.3 compatibility ?>
                 <?php if(!$keyProducts){ ?>
                     <div class="row cilinder-count-item-row">
                         <div class="col-md-8ths">
@@ -1267,8 +1268,8 @@ if($keyplanCart) {
                                     $product = new WC_Product(1625);
                                     $keyPrice = $product->get_regular_price();
                                     ?>
-                                    <div class="key-price" data-value="<?=sanitize_title($extraKeyPrice["options"][0]["label"]). '-1';?>"><?php echo get_product_addon_price_for_display_custom($keyPrice + $extraKeyPrice["options"][0]["price"])?></div>
-                                    <div class="extra-key-price" data-value="<?=sanitize_title($extraKeyPrice["options"][1]["label"]). '-2';?>"><?php echo get_product_addon_price_for_display_custom($keyPrice + $extraKeyPrice["options"][1]["price"])?></div>
+                                    <div class="key-price" data-value="<?=sanitize_title($extraKeyPrice["options"][0]["label"]). '-1';?>"><?php echo get_product_addon_price_for_display_custom((float)$keyPrice + (float)$extraKeyPrice["options"][0]["price"])?></div>
+                                    <div class="extra-key-price" data-value="<?=sanitize_title($extraKeyPrice["options"][1]["label"]). '-2';?>"><?php echo get_product_addon_price_for_display_custom((float)$keyPrice + (float)$extraKeyPrice["options"][1]["price"])?></div>
                                     <div class="access-params-names" data-name-user="addon-<?php echo sanitize_title($extraKeyUser["field-name"]); ?>[]" data-name-price="addon-<?php echo sanitize_title($extraKeyPrice["field-name"]); ?>" data-name-access="addon-<?php echo sanitize_title($extraKeyAccess["field-name"]); ?>[]"></div>
                                     <div class="cilinder-name-field" data-name="addon-<?php echo sanitize_title($pDoorname["field-name"]); ?>[]"></div>
                                 </div>
@@ -1378,8 +1379,8 @@ if($keyplanCart) {
                                     $product = new WC_Product(1597);
                                     $keyPrice = $product->get_regular_price();
                                     ?>
-                                    <div class="key-price" data-value="<?=sanitize_title($extraKeyPrice["options"][0]["label"]). '-1';?>"><?php echo get_product_addon_price_for_display_custom($keyPrice + $extraKeyPrice["options"][0]["price"])?></div>
-                                    <div class="extra-key-price" data-value="<?=sanitize_title($extraKeyPrice["options"][1]["label"]). '-2';?>"><?php echo get_product_addon_price_for_display_custom($keyPrice + $extraKeyPrice["options"][1]["price"])?></div>
+                                    <div class="key-price" data-value="<?=sanitize_title($extraKeyPrice["options"][0]["label"]). '-1';?>"><?php echo get_product_addon_price_for_display_custom((float)$keyPrice + (float)$extraKeyPrice["options"][0]["price"])?></div>
+                                    <div class="extra-key-price" data-value="<?=sanitize_title($extraKeyPrice["options"][1]["label"]). '-2';?>"><?php echo get_product_addon_price_for_display_custom((float)$keyPrice + (float)$extraKeyPrice["options"][1]["price"])?></div>
                                     <div class="access-params-names" data-name-user="addon-<?php echo sanitize_title($extraKeyUser["field-name"]); ?>[]" data-name-price="addon-<?php echo sanitize_title($extraKeyPrice["field-name"]); ?>" data-name-access="addon-<?php echo sanitize_title($extraKeyAccess["field-name"]); ?>[]"></div>
                                     <div class="cilinder-name-field" data-name="addon-<?php echo sanitize_title($pDoorname["field-name"]); ?>[]"></div>
                                 </div>
