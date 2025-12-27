@@ -1285,7 +1285,7 @@ if($keyplanCart) {
                                 </div>
                                 <div class="special-offer-wrapper">
                                     <span class="special-offer">
-                                        <span>€</span><span id="price-1626"><?=sprintf("%01.2f", get_product_addon_price_for_display_custom($keyplanPrice + $regularPrice + $pSizes["options"][0]["price"] + $pExtra1["options"][0]["price"] + $pExtra2["options"][0]["price"] + $pMaterials["options"][0]["price"] + $pFrontdoor["options"][0]["price"]))?></span>
+                                        <span>€</span><span id="price-1626"><?=sprintf("%01.2f", get_product_addon_price_for_display_custom((float)$keyplanPrice + (float)$regularPrice + (float)$pSizes["options"][0]["price"] + (float)$pExtra1["options"][0]["price"] + (float)$pExtra2["options"][0]["price"] + (float)$pMaterials["options"][0]["price"] + (float)$pFrontdoor["options"][0]["price"]))?></span>
                                     </span>
                                     <div class="btw"><?php if($excl_btw){ ?>excl.<?php } else { ?>incl.<?php } ?> BTW</div>
                                 </div>
@@ -1396,7 +1396,7 @@ if($keyplanCart) {
                                 </div>
                                 <div class="special-offer-wrapper">
                                     <span class="special-offer">
-                                        <span>€</span><span id="price-1577"><?=sprintf("%01.2f", get_product_addon_price_for_display_custom($keyplanPrice + $regularPrice + $pSizes["options"][0]["price"] + $pExtra1["options"][0]["price"] + $pExtra2["options"][0]["price"] + $pMaterials["options"][0]["price"] + $pFrontdoor["options"][0]["price"]))?></span>
+                                        <span>€</span><span id="price-1577"><?=sprintf("%01.2f", get_product_addon_price_for_display_custom((float)$keyplanPrice + (float)$regularPrice + (float)$pSizes["options"][0]["price"] + (float)$pExtra1["options"][0]["price"] + (float)$pExtra2["options"][0]["price"] + (float)$pMaterials["options"][0]["price"] + (float)$pFrontdoor["options"][0]["price"]))?></span>
                                     </span>
                                     <div class="btw"><?php if($excl_btw){ ?>excl.<?php } else { ?>incl.<?php } ?> BTW</div>
                                 </div>
