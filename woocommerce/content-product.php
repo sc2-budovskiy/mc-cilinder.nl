@@ -31,7 +31,7 @@ if(!empty($var))
 {
     $defaultOptions = get_field("default_options", get_the_ID());
     foreach($var as $k => $addon){
-        $dVal = $defaultOptions ? $defaultOptions[substr($addon["field-name"],strlen((string)get_the_ID()."-"),-2)] : "";
+        $dVal = $defaultOptions ? ($defaultOptions[substr($addon["field-name"],strlen((string)get_the_ID()."-"),-2)] ?? "") : "";
         if($dVal && $dVal != "default") {
             foreach($addon["options"] as $option) {
                 if(trim($option["label"]) == trim($dVal)) {

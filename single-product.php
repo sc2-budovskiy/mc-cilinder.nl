@@ -192,13 +192,13 @@ if(!empty($optionImages)) {
                 $userImage = $var[4];
                 $product = wc_get_product($id);
 
-                $outerSide = @$var[6];
-                $innerSide = @$var[7];
+                $outerSide = $var[6] ?? null;
+                $innerSide = $var[7] ?? null;
 
                 if(!empty($extra2["options"])) {
                     foreach($extra2["options"] as $ind=>$option) {
                         if(!$option["image"]) {
-                            if(@$extra1["options"][$ind]["image"] && $option["label"] == @$extra1["options"][$ind]["label"]) {
+                            if(($extra1["options"][$ind]["image"] ?? null) && $option["label"] == ($extra1["options"][$ind]["label"] ?? null)) {
                                 $extra2["options"][$ind]["image"] = $extra1["options"][$ind]["image"];
                             }
                             else {

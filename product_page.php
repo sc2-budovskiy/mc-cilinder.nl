@@ -334,13 +334,13 @@ if(!empty($optionImages)) {
                 $keyTypes = $var[5];
                 $product = wc_get_product($id);
 
-                $outerSide = @$var[6];
-                $innerSide = @$var[7];
+                $outerSide = $var[6] ?? null;
+                $innerSide = $var[7] ?? null;
 
                 if(!empty($extra2["options"])) {
                     foreach($extra2["options"] as $ind=>$option) {
                         if(!$option["image"]) {
-                            if(@$extra1["options"][$ind]["image"] && $option["label"] == @$extra1["options"][$ind]["label"]) {
+                            if(($extra1["options"][$ind]["image"] ?? null) && $option["label"] == ($extra1["options"][$ind]["label"] ?? null)) {
                                 $extra2["options"][$ind]["image"] = $extra1["options"][$ind]["image"];
                             }
                             else {
@@ -379,7 +379,7 @@ if(!empty($optionImages)) {
                     foreach($var as $ind => $item) {
                         if(!empty($item["options"]) && $item["name"] == "Maat") {
                             if($item["options"][0]["image"]) {
-                                $defaultImage = wp_get_attachment_image_src($item["options"][0]["image"], null)[0];
+                                $defaultImage = ($img = wp_get_attachment_image_src($item["options"][0]["image"], null)) ? $img[0] : '';
                                 //$dataDefaultImage = $defaultImage;
                             }
                         }
@@ -560,7 +560,7 @@ if(!empty($optionImages)) {
                                             <?php foreach($materials["options"] as $ind=>$option){ ?>
                                                 <div class="cilinder-count-item<?=($ind==$materialsDefaultIndex?" active":"")?>" onclick="javascript:;">
                                                     <div class="cilinder-count-title" data-value="<?=sanitize_title($option["label"])?>"><?=$option["label"]?></div>
-                                                    <div class="cilinder-count-img" style="background-image: url(<?=wp_get_attachment_image_src($option["image"], null)[0]?>);"></div>
+                                                    <div class="cilinder-count-img" style="background-image: url(<?=($img = wp_get_attachment_image_src($option["image"], null)) ? $img[0] : ''?>);"></div>
                                                 </div>
                                             <?php } ?>
                                         </div>
@@ -575,7 +575,7 @@ if(!empty($optionImages)) {
                                             <?php foreach($extra1["options"] as $ind=>$option){ ?>
                                                 <div class="cilinder-count-item<?=($ind==0?" active":"")?>" onclick="javascript:;">
                                                     <div class="cilinder-count-title" data-value="<?=sanitize_title($option["label"])?>"><?=$option["label"]?></div>
-                                                    <div class="cilinder-count-img" style="background-image: url(<?=wp_get_attachment_image_src($option["image"], null)[0]?>);"></div>
+                                                    <div class="cilinder-count-img" style="background-image: url(<?=($img = wp_get_attachment_image_src($option["image"], null)) ? $img[0] : ''?>);"></div>
                                                 </div>
                                             <?php } ?>
                                         </div>
@@ -590,7 +590,7 @@ if(!empty($optionImages)) {
                                             <?php foreach($extra2["options"] as $ind=>$option){ ?>
                                                 <div class="cilinder-count-item<?=($ind==$extraDefaultIndex?" active":"")?>" onclick="javascript:;">
                                                     <div class="cilinder-count-title" data-value="<?=sanitize_title($option["label"])?>"><?= str_replace(" lange zijde", "",$option["label"]); ?></div>
-                                                    <div class="cilinder-count-img" style="background-image: url(<?=wp_get_attachment_image_src($option["image"], null)[0]?>);"></div>
+                                                    <div class="cilinder-count-img" style="background-image: url(<?=($img = wp_get_attachment_image_src($option["image"], null)) ? $img[0] : ''?>);"></div>
                                                 </div>
                                             <?php } ?>
                                         </div>
@@ -723,8 +723,8 @@ if(!empty($optionImages)) {
                                         $pMaterials = $pVar[2];
                                         $pExtra1 = $pVar[0];
                                         $pExtra2 = $pVar[1];
-                                        $pOuterSide = @$pVar[6];
-                                        $pInnerSide = @$pVar[7];
+                                        $pOuterSide = $pVar[6] ?? null;
+                                        $pInnerSide = $pVar[7] ?? null;
                                         $product = wc_get_product($pId);
                                         $productImage = $product->get_image($size = 'shop_thumbnail');
                                         $regularPrice = $product->get_regular_price();
@@ -908,7 +908,7 @@ if(!empty($optionImages)) {
                 <?php foreach($keyTypes["options"] as $ind=>$option){ ?>
                     <div class="cilinder-count-item<?=($ind==0?" active":"")?>" onclick="javascript:;">
                         <div class="cilinder-count-title" data-value="<?=sanitize_title($option["label"])?>"><?=$option["label"]?></div>
-                        <div class="cilinder-count-img" style="background-image: url(<?=wp_get_attachment_image_src($option["image"], null)[0]?>);"></div>
+                        <div class="cilinder-count-img" style="background-image: url(<?=($img = wp_get_attachment_image_src($option["image"], null)) ? $img[0] : ''?>);"></div>
                     </div>
                 <?php } ?>
             </div>

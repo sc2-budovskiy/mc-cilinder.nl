@@ -448,8 +448,8 @@ if($keyplanCart) {
                 $pDoorname = $pVar[4];
                 $pFrontdoor = $pVar[5];
 
-                $outerSide = @$pVar[8];
-                $innerSide = @$pVar[9];
+                $outerSide = $pVar[8] ?? null;
+                $innerSide = $pVar[9] ?? null;
 
                 $id = 251;
                 $var = get_product_addons($id);
@@ -576,7 +576,7 @@ if($keyplanCart) {
                                             <?php foreach($materials["options"] as $ind=>$option){ ?>
                                                 <div class="cilinder-count-item<?=($ind==0?" active":"")?>" onclick="javascript:;">
                                                     <div class="cilinder-count-title" data-value="<?=sanitize_title($option["label"])?>"><?=$option["label"]?></div>
-                                                    <div class="cilinder-count-img" style="background-image: url(<?=wp_get_attachment_image_src($option["image"], null)[0]?>);"></div>
+                                                    <div class="cilinder-count-img" style="background-image: url(<?=($img = wp_get_attachment_image_src($option["image"], null)) ? $img[0] : ''?>);"></div>
                                                     <!--<div class="border-bottom"></div>-->
                                                 </div>
                                             <?php } ?>
@@ -592,7 +592,7 @@ if($keyplanCart) {
                                             <?php foreach($extra1["options"] as $ind=>$option){ ?>
                                                 <div class="cilinder-count-item<?=($ind==0?" active":"")?>" onclick="javascript:;">
                                                     <div class="cilinder-count-title" data-value="<?=sanitize_title($option["label"])?>"><?=$option["label"]?></div>
-                                                    <div class="cilinder-count-img" style="background-image: url(<?=wp_get_attachment_image_src($option["image"], null)[0]?>);"></div>
+                                                    <div class="cilinder-count-img" style="background-image: url(<?=($img = wp_get_attachment_image_src($option["image"], null)) ? $img[0] : ''?>);"></div>
                                                     <!--<div class="border-bottom"></div>-->
                                                 </div>
                                             <?php } ?>
@@ -608,7 +608,7 @@ if($keyplanCart) {
                                             <?php foreach($extra2["options"] as $ind=>$option){ ?>
                                                 <div class="cilinder-count-item<?=($ind==0?" active":"")?>" onclick="javascript:;">
                                                     <div class="cilinder-count-title" data-value="<?=sanitize_title($option["label"])?>"><?= str_replace(" lange zijde", "",$option["label"]); ?></div>
-                                                    <div class="cilinder-count-img" style="background-image: url(<?=wp_get_attachment_image_src($option["image"], null)[0]?>);"></div>
+                                                    <div class="cilinder-count-img" style="background-image: url(<?=($img = wp_get_attachment_image_src($option["image"], null)) ? $img[0] : ''?>);"></div>
                                                     <!--<div class="border-bottom"></div>-->
                                                 </div>
                                             <?php } ?>
@@ -769,7 +769,7 @@ if($keyplanCart) {
                                                 <?php foreach($materials["options"] as $ind=>$option){ ?>
                                                     <div class="cilinder-count-item<?=($item->color==$option["label"]?" active":"")?>" onclick="javascript:;">
                                                         <div class="cilinder-count-title" data-value="<?=sanitize_title($option["label"])?>"><?=$option["label"]?></div>
-                                                        <div class="cilinder-count-img" style="background-image: url(<?=wp_get_attachment_image_src($option["image"], null)[0]?>);"></div>
+                                                        <div class="cilinder-count-img" style="background-image: url(<?=($img = wp_get_attachment_image_src($option["image"], null)) ? $img[0] : ''?>);"></div>
                                                         <!--<div class="border-bottom"></div>-->
                                                     </div>
                                                 <?php } ?>
@@ -785,7 +785,7 @@ if($keyplanCart) {
                                                 <?php foreach($extra1["options"] as $ind=>$option){ ?>
                                                     <div class="cilinder-count-item<?=($option["label"]==$item->knopShort?" active":"")?>" onclick="javascript:;">
                                                         <div class="cilinder-count-title" data-value="<?=sanitize_title($option["label"])?>"><?=$option["label"]?></div>
-                                                        <div class="cilinder-count-img" style="background-image: url(<?=wp_get_attachment_image_src($option["image"], null)[0]?>);"></div>
+                                                        <div class="cilinder-count-img" style="background-image: url(<?=($img = wp_get_attachment_image_src($option["image"], null)) ? $img[0] : ''?>);"></div>
                                                         <!--<div class="border-bottom"></div>-->
                                                     </div>
                                                 <?php } ?>
@@ -801,7 +801,7 @@ if($keyplanCart) {
                                                 <?php foreach($extra2["options"] as $ind=>$option){ ?>
                                                     <div class="cilinder-count-item<?=($option["label"]==$item->knopLong?" active":"")?>" onclick="javascript:;">
                                                         <div class="cilinder-count-title" data-value="<?=sanitize_title($option["label"])?>"><?= str_replace(" lange zijde", "",$option["label"]); ?></div>
-                                                        <div class="cilinder-count-img" style="background-image: url(<?=wp_get_attachment_image_src($option["image"], null)[0]?>);"></div>
+                                                        <div class="cilinder-count-img" style="background-image: url(<?=($img = wp_get_attachment_image_src($option["image"], null)) ? $img[0] : ''?>);"></div>
                                                         <!--<div class="border-bottom"></div>-->
                                                     </div>
                                                 <?php } ?>
@@ -1230,8 +1230,8 @@ if($keyplanCart) {
                                     $pMaterials = $pVar[2];
                                     $pExtra1 = $pVar[0];
                                     $pExtra2 = $pVar[1];
-                                    $pOuterSide = @$pVar[8];
-                                    $pInnerSide = @$pVar[9];
+                                    $pOuterSide = $pVar[8] ?? null;
+                                    $pInnerSide = $pVar[9] ?? null;
                                     $product = wc_get_product($pId);
                                     $productImage = $product->get_image($size = 'shop_thumbnail');
                                     $regularPrice = $product->get_regular_price();
@@ -1341,8 +1341,8 @@ if($keyplanCart) {
                                     $pMaterials = $pVar[2];
                                     $pExtra1 = $pVar[0];
                                     $pExtra2 = $pVar[1];
-                                    $pOuterSide = @$pVar[8];
-                                    $pInnerSide = @$pVar[9];
+                                    $pOuterSide = $pVar[8] ?? null;
+                                    $pInnerSide = $pVar[9] ?? null;
                                     $product = wc_get_product($pId);
                                     $productImage = $product->get_image($size = 'shop_thumbnail');
                                     $regularPrice = $product->get_regular_price();
@@ -1500,7 +1500,7 @@ if($keyplanCart) {
                 <?php foreach($keyTypes["options"] as $ind=>$option){ ?>
                     <div class="cilinder-count-item<?=((sanitize_title($keyType) == sanitize_title($option["label"]) || (!$keyType && $ind==0))?" active":"")?>" onclick="javascript:;">
                         <div class="cilinder-count-title" data-value="<?=sanitize_title($option["label"])?>"><?=$option["label"]?></div>
-                        <div class="cilinder-count-img" style="background-image: url(<?=wp_get_attachment_image_src($option["image"], null)[0]?>);"></div>
+                        <div class="cilinder-count-img" style="background-image: url(<?=($img = wp_get_attachment_image_src($option["image"], null)) ? $img[0] : ''?>);"></div>
                         <!--<div class="border-bottom"></div>-->
                     </div>
                 <?php } ?>
