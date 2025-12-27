@@ -190,7 +190,7 @@ if($pId) {
 
 <div class="cilinder-config-block" style="display:none;">
     <div class="cilinder-config-options clearfix">
-        <?php/* Don't delete this block! */?>
+        <?php /* Don't delete this block! */ ?>
         <!-- Extra key options -->
         <div class="cilinder-params clearfix"></div>
     </div>
