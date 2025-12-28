@@ -57,6 +57,14 @@ function calcFreeKeysCnt($cilinderCount, $isKeyplan = false, $noAddKeys = false)
 
 do_action( 'woocommerce_before_cart' ); ?>
 
+<!-- Cart Loading Overlay -->
+<div id="cart-loading-overlay" style="display:none;">
+    <div class="cart-loading-spinner">
+        <div class="big-loader"></div>
+        <p>Verwijderen...</p>
+    </div>
+</div>
+
 <form class="woocommerce-cart-form new-cart" action="<?php echo esc_url( wc_get_cart_url() ); ?>" method="post">
     <?php do_action( 'woocommerce_before_cart_table' ); ?>
 
@@ -409,20 +417,7 @@ do_action( 'woocommerce_before_cart' ); ?>
                             <a class="cilinder-edit show-cilinder-params">Cilinder aanpassen</a>
                             <a class="cilinder-edit submit-cilinder-params" data-product-id="<?php echo $_product->get_id(); ?>" data-cart-item-key="<?=$cart_item_key?>" data-qty-value="<?=$cart_item['quantity']?>">Change</a>
                             <div class="product-remove">
-                                <?php
-                                echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                                    'woocommerce_cart_item_remove_link',
-                                    sprintf(
-                                        '<a class="remove cilinder-remove" aria-label="%s" data-product_id="%s" data-product_sku="%s" data-cart-item-key="%s" data-qty-value="%s">&times;</a>',
-                                        '&times;',
-                                        esc_attr( $product_id ),
-                                        esc_attr( $_product->get_sku() ),
-                                        $cart_item_key,
-                                        $cart_item['quantity']
-                                    ),
-                                    $cart_item_key
-                                );
-                                ?>
+                                <a data-href="<?php echo esc_url( wc_get_cart_remove_url( $cart_item_key ) ); ?>" class="remove cilinder-remove" aria-label="&times;" data-product_id="<?php echo esc_attr( $product_id ); ?>" data-product_sku="<?php echo esc_attr( $_product->get_sku() ); ?>" data-cart-item-key="<?php echo $cart_item_key; ?>" data-qty-value="<?php echo $cart_item['quantity']; ?>">&times;</a>
                             </div>
                         </div>
                         <?php
@@ -543,19 +538,7 @@ do_action( 'woocommerce_before_cart' ); ?>
                                 </div>
                             </div>
                             <div class="product-remove">
-                                <?php
-                                echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                                    'woocommerce_cart_item_remove_link',
-                                    sprintf(
-                                        '<a data-href="%s" class="remove simple-product-remove" aria-label="%s" data-product_id="%s" data-product_sku="%s">&times;</a>',
-                                        esc_url( wc_get_cart_remove_url( $cart_item_key ) ),
-                                        '&times;',
-                                        esc_attr( $product_id ),
-                                        esc_attr( $_product->get_sku() )
-                                    ),
-                                    $cart_item_key
-                                );
-                                ?>
+                                <a data-href="<?php echo esc_url( wc_get_cart_remove_url( $cart_item_key ) ); ?>" class="remove simple-product-remove" aria-label="&times;" data-product_id="<?php echo esc_attr( $product_id ); ?>" data-product_sku="<?php echo esc_attr( $_product->get_sku() ); ?>">&times;</a>
                             </div>
                         </div>
                         <?php

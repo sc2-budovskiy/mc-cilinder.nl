@@ -1178,27 +1178,39 @@ jQuery(document).ready(function() {
             });
         });
     });
-    //remove cart item
-    jQuery(document).on("click", ".checkout-products-data .cilinder-remove", function () {
+    //remove cart item - navigate to WooCommerce native removal URL
+    jQuery(document).on("click", ".checkout-products-data .cilinder-remove", function (e) {
+        e.preventDefault();
         var obj = jQuery(this);
-        var pd = obj.closest(".checkout-products-data");
-        var cartItemKey = obj.data("cart-item-key");
-        var newQty = parseInt(obj.data("qty-value")) - 1;
-        pd.hide();
-        jQuery.post(location.pathname, {cart_item_key:cartItemKey,new_qty:newQty}, function() {
-            location.reload();
-        });
-    });
-    jQuery(document).on("click", ".checkout-products-data .simple-product-remove", function () {
-        var obj = jQuery(this);
-        var pd = obj.closest(".checkout-products-data");
-        pd.hide();
-        if(obj.closest(".panel").length !== 0) {
-            obj.closest(".panel").hide();
+        var removeUrl = obj.attr("data-href");
+        if (removeUrl) {
+            // Show full-screen overlay immediately
+            jQuery('#cart-loading-overlay').fadeIn(150);
+            // Fade out the item
+            obj.closest(".checkout-products-data").fadeOut(150);
+            // Small delay for animation, then redirect
+            setTimeout(function() {
+                window.location.href = removeUrl;
+            }, 150);
         }
-        jQuery.get(obj.attr("data-href") ? obj.attr("data-href") : obj.attr("href"), function() {
-            location.reload();
-        });
+    });
+    jQuery(document).on("click", ".checkout-products-data .simple-product-remove", function (e) {
+        e.preventDefault();
+        var obj = jQuery(this);
+        var removeUrl = obj.attr("data-href") || obj.attr("href");
+        if (removeUrl) {
+            // Show full-screen overlay immediately
+            jQuery('#cart-loading-overlay').fadeIn(150);
+            // Fade out the item
+            obj.closest(".checkout-products-data").fadeOut(150);
+            if(obj.closest(".panel").length !== 0) {
+                obj.closest(".panel").fadeOut(150);
+            }
+            // Small delay for animation, then redirect
+            setTimeout(function() {
+                window.location.href = removeUrl;
+            }, 150);
+        }
     });
     jQuery(".param-6 input[type='checkbox']:checked").each(function () {
         jQuery(this).trigger("change");

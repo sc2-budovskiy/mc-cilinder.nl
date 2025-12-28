@@ -242,12 +242,7 @@ function redirection_function(){
     }
 }
 
-add_action( 'template_redirect', 'set_cart_item_quantity' );
-function set_cart_item_quantity() {
-    if( isset( $_POST['new_qty'] ) && isset( $_POST['cart_item_key'] ) && $_SERVER['REQUEST_METHOD'] == "POST" ) {
-        WC()->cart->set_quantity($_POST['cart_item_key'], intval($_POST['new_qty']));
-    }
-}
+// Cart item quantity handler removed - now using WooCommerce's native removal URL
 
 add_action( 'woocommerce_order_status_pending', 'save_to_excel', 10, 1);
 add_action( 'woocommerce_order_status_on-hold', 'save_to_excel', 10, 1);

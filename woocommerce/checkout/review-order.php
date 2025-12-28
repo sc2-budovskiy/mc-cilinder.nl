@@ -341,20 +341,7 @@ function calcFreeKeysCnt($cilinderCount, $isKeyplan = false, $noAddKeys = false)
                                                     }
                                                     ?>
                                                     <div class="param-value">
-                                                        <?php
-                                                        echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                                                            'woocommerce_cart_item_remove_link',
-                                                            sprintf(
-                                                                '<a class="remove cilinder-remove" aria-label="%s" data-product_id="%s" data-product_sku="%s" data-cart-item-key="%s" data-qty-value="%s">&times;</a>',
-                                                                '&times;',
-                                                                esc_attr( $_product->get_id() ),
-                                                                esc_attr( $_product->get_sku() ),
-                                                                $cart_item_key,
-                                                                $cart_item['quantity']
-                                                            ),
-                                                            $cart_item_key
-                                                        );
-                                                        ?>
+                                                        <a data-href="<?php echo esc_url( wc_get_cart_remove_url( $cart_item_key ) ); ?>" class="remove cilinder-remove" aria-label="&times;" data-product_id="<?php echo esc_attr( $_product->get_id() ); ?>" data-product_sku="<?php echo esc_attr( $_product->get_sku() ); ?>" data-cart-item-key="<?php echo $cart_item_key; ?>" data-qty-value="<?php echo $cart_item['quantity']; ?>">&times;</a>
                                                     </div>
                                                 </div>
                                             </div>
