@@ -715,7 +715,7 @@ if(!empty($optionImages)) {
                             <div class="offer-item-inner">
                                 <div class="oi-block">
                                     <div id="po-<?php the_field("cilinder") ?>" class="offer-prices" style="display: none;">
-                                        <?
+                                        <?php
                                         $pId = intval(get_field("cilinder"));
                                         $pVar = get_product_addons($pId);
                                         $pKeyTypes = $pVar[5];
@@ -745,24 +745,24 @@ if(!empty($optionImages)) {
                                             }
                                             ?>
                                             <div class="<?=$v["field-name"]?>">
-                                                <?
+                                                <?php
                                                 foreach($v["options"] as $option)
                                                 {
                                                     ?>
                                                     <div
-                                                        <? if(strpos($v["field-name"], "extra-knop-lange-kant") === false) { ?>
+                                                        <?php if(strpos($v["field-name"], "extra-knop-lange-kant") === false) { ?>
                                                             data-val="<?=$option["label"]?>"
-                                                        <? } else { ?>
+                                                        <?php } else { ?>
                                                             data-val="<?=str_replace(" lange zijde", "", $option["label"]);?>"
-                                                        <? } ?>
+                                                        <?php } ?>
                                                     >
                                                         <?php echo get_product_addon_price_for_display_custom($option["price"])?>
                                                     </div>
-                                                    <?
+                                                    <?php
                                                 }
                                                 ?>
                                             </div>
-                                            <?
+                                            <?php
                                         }
                                         ?>
                                         <div class="product-price"><?=get_product_addon_price_for_display_custom($product->get_regular_price())?></div>
@@ -799,7 +799,8 @@ if(!empty($optionImages)) {
                                     <div itemtype="https://schema.org/Product" itemscope>
                                         <meta itemprop="name" content="<?php echo $mainProduct->get_name(); ?>" />
                                         <?php if($mainProduct->get_image_id()) { ?>
-                                            <link itemprop="image" href="<?php echo wp_get_attachment_image_src( $mainProduct->get_image_id(), 'full' )[0]; ?>" />
+                                            <?php $mainImg = wp_get_attachment_image_src( $mainProduct->get_image_id(), 'full' ); ?>
+                                            <link itemprop="image" href="<?php echo $mainImg ? $mainImg[0] : ''; ?>" />
                                         <?php } ?>
                                         <div itemprop="offers" itemtype="https://schema.org/Offer" itemscope>
                                             <link itemprop="url" href="<?php echo get_permalink(); ?>" />

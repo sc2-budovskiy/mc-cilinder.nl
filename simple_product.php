@@ -17,9 +17,20 @@ $options = get_option( 'theme_settings' ); ?>
     </div>
 </div>
 
-<?
+<?php
 $pId = get_field("product");
 $pVar = array();
+
+// Initialize variables for PHP 8.3 compatibility
+$product = null;
+$productImage = '';
+$basePrice = 0;
+$productName = '';
+$price = 0;
+$showUserImage = false;
+$userImage = null;
+$mainProduct = null;
+
 if($pId) {
     $product      = wc_get_product( $pId );
     $productImage = $product->get_image( $size = 'shop_thumbnail' );
@@ -29,7 +40,7 @@ if($pId) {
     $price = $basePrice;
     if(!empty($pVar)) {
         foreach($pVar as $ind => $item) {
-            if(!empty($item["options"]) && @$item["options"][0]["price"]) {
+            if(!empty($item["options"]) && isset($item["options"][0]["price"]) && $item["options"][0]["price"]) {
                 $price += floatval($item["options"][0]["price"]);
             }
         }
@@ -120,14 +131,15 @@ if($pId) {
                     <?php
                     if(!empty($pVar)) {
                         foreach($pVar as $ind => $item) {
-                            if(!empty($item["options"]) && @$item["options"][0]["label"] && $ind < count($pVar) - 2) {
+                            if(!empty($item["options"]) && isset($item["options"][0]["label"]) && $item["options"][0]["label"] && $ind < count($pVar) - 2) {
                                 ?>
                                 <div class="ow-item">
                                     <?php
                                     foreach ( $item["options"] as $oInd => $opt ) {
                                         ?>
                                         <div class="options-item <?= ($oInd == 0) ? 'active' : '' ;  ?>" data-for="addon-<?php echo sanitize_title($item["field-name"]) . "-" . $oInd; ?>" data-price="<?php echo sprintf("%01.2f", get_product_addon_price_for_display_custom( $opt["price"] )); ?>">
-                                            <img src="<?=wp_get_attachment_image_src($opt["image"], null)[0]?>">
+                                            <?php $optImg = wp_get_attachment_image_src($opt["image"], null); ?>
+                                            <img src="<?= $optImg ? $optImg[0] : '' ?>">
                                         </div>
                                         <?php
                                     }
@@ -231,10 +243,12 @@ if($pId) {
                             <span class="cilinder-num">1</span> item
                         </div>
 
+                        <?php if($mainProduct): ?>
                         <div itemtype="https://schema.org/Product" itemscope>
                             <meta itemprop="name" content="<?php echo $mainProduct->get_name(); ?>" />
                             <?php if($mainProduct->get_image_id()) { ?>
-                                <link itemprop="image" href="<?php echo wp_get_attachment_image_src( $mainProduct->get_image_id(), 'full' )[0]; ?>" />
+                                <?php $img = wp_get_attachment_image_src( $mainProduct->get_image_id(), 'full' ); ?>
+                                <link itemprop="image" href="<?php echo $img ? $img[0] : ''; ?>" />
                             <?php } ?>
                             <div itemprop="offers" itemtype="https://schema.org/Offer" itemscope>
                                 <link itemprop="url" href="<?php echo get_permalink(); ?>" />
@@ -248,12 +262,13 @@ if($pId) {
                                 </div>
                             <?php } ?>
                         </div>
+                        <?php endif; ?>
 
                         <div class="sep"></div>
                         <?php
                         if(!empty($pVar)) {
                             foreach($pVar as $ind => $item) {
-                                if(!empty($item["options"]) && @$item["options"][0]["label"] && $ind < count($pVar) - 2) {
+                                if(!empty($item["options"]) && isset($item["options"][0]["label"]) && $item["options"][0]["label"] && $ind < count($pVar) - 2) {
                                     ?>
                                     <div class="delivery-title"><?php echo $item["name"]; ?>:</div>
                                     <?php
