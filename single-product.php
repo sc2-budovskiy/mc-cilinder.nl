@@ -185,17 +185,23 @@ if(!empty($optionImages)) {
             <div class="col-md-12 cilinder-config-block">
                 <?php
                 $var = get_product_addons($id);
-                $sizes = $var[3];
-                $materials = $var[2];
-                $extra1 = $var[0];
-                $extra2 = $var[1];
-                $userImage = $var[4];
+                // PHP 8.4 Fix: Validate $var is an array before accessing indices
+                if (is_array($var)) {
+                    $sizes = $var[3] ?? null;
+                    $materials = $var[2] ?? null;
+                    $extra1 = $var[0] ?? null;
+                    $extra2 = $var[1] ?? null;
+                    $userImage = $var[4] ?? null;
+                    
+                    $outerSide = $var[6] ?? null;
+                    $innerSide = $var[7] ?? null;
+                } else {
+                    $sizes = $materials = $extra1 = $extra2 = $userImage = $outerSide = $innerSide = null;
+                }
+
                 $product = wc_get_product($id);
 
-                $outerSide = $var[6] ?? null;
-                $innerSide = $var[7] ?? null;
-
-                if(!empty($extra2["options"])) {
+                if(!empty($extra2["options"]) && is_array($extra2["options"])) {
                     foreach($extra2["options"] as $ind=>$option) {
                         if(!$option["image"]) {
                             if(($extra1["options"][$ind]["image"] ?? null) && $option["label"] == ($extra1["options"][$ind]["label"] ?? null)) {
@@ -203,7 +209,7 @@ if(!empty($optionImages)) {
                             }
                             else {
                                 $diOption = get_field("di_extra", "option");
-                                $diOptionVal = $diOption[sanitize_title(str_replace(" lange zijde", "", $option["label"]))];
+                                $diOptionVal = $diOption[sanitize_title(str_replace(" lange zijde", "", $option["label"]))] ?? null;
                                 if($diOption && $diOptionVal) {
                                     $extra2["options"][$ind]["image"] = $diOptionVal;
                                 }
@@ -211,11 +217,11 @@ if(!empty($optionImages)) {
                         }
                     }
                 }
-                if(!empty($materials["options"])) {
+                if(!empty($materials["options"]) && is_array($materials["options"])) {
                     foreach($materials["options"] as $ind=>$option) {
                         if(!$option["image"]) {
                             $diOption = get_field("di_material", "option");
-                            $diOptionVal = $diOption[sanitize_title($option["label"])];
+                            $diOptionVal = $diOption[sanitize_title($option["label"])] ?? null;
                             if($diOption && $diOptionVal) {
                                 $materials["options"][$ind]["image"] = $diOptionVal;
                             }
@@ -225,19 +231,22 @@ if(!empty($optionImages)) {
 
                 $haveOptions = false;
                 $defaultOptions = get_field("default_options", $id);
-                foreach($defaultOptions as $opt) {
-                    if($opt && $opt != "default") {
-                        $haveOptions = true;
-                        break;
+                // PHP 8.4 Fix: Validate $defaultOptions is iterable
+                if (is_array($defaultOptions) || is_object($defaultOptions)) {
+                    foreach($defaultOptions as $opt) {
+                        if($opt && $opt != "default") {
+                            $haveOptions = true;
+                            break;
+                        }
                     }
                 }
                 //$dataDefaultImage = "";
                 $defaultImage = get_bloginfo('template_directory') . "/img/cilinders/cilinder-1.jpg";
-                if(!empty($var)) {
+                if(!empty($var) && is_array($var)) {
                     foreach($var as $ind => $item) {
                         if(!empty($item["options"]) && $item["name"] == "Maat") {
                             if($item["options"][0]["image"]) {
-                                $defaultImage = wp_get_attachment_image_src($item["options"][0]["image"], null)[0];
+                                $defaultImage = wp_get_attachment_image_src($item["options"][0]["image"], null)[0] ?? $defaultImage;
                                 //$dataDefaultImage = $defaultImage;
                             }
                         }
@@ -551,63 +560,73 @@ if(!empty($optionImages)) {
                             $pOuterSide = $outerSide;
                             $pInnerSide = $innerSide;
                             $product = wc_get_product($id);
-                            $regularPrice = $product->get_regular_price();
-                            $productImage = $product->get_image($size = 'shop_thumbnail');
+                            if ($product) {
+                                $regularPrice = $product->get_regular_price();
+                                $productImage = $product->get_image($size = 'shop_thumbnail');
+                            } else {
+                                $regularPrice = 0;
+                                $productImage = '';
+                            }
                             $addonsPrice = 0;
                             $additional_price = 0;
-                            foreach($var as $k=>$v)
-                            {
-                                $dVal = $defaultOptions ? $defaultOptions[substr($v["field-name"],strlen((string)$id."-"),-2)] : "";
-                                if($dVal && $dVal != "default") {
-                                    foreach($v["options"] as $option) {
-                                        if(trim($option["label"]) == trim($dVal)) {
-                                            $addonsPrice += floatval($option["price"]);
-                                            break;
+                            if (!empty($var) && is_array($var)) {
+                                foreach($var as $k=>$v)
+                                {
+                                    $dVal = ($defaultOptions && isset($defaultOptions[substr($v["field-name"],strlen((string)$id."-"),-2)])) ? $defaultOptions[substr($v["field-name"],strlen((string)$id."-"),-2)] : "";
+                                    if($dVal && $dVal != "default") {
+                                        foreach($v["options"] as $option) {
+                                            if(trim($option["label"]) == trim($dVal)) {
+                                                $addonsPrice += floatval($option["price"]);
+                                                break;
+                                            }
                                         }
+                                    } else {
+                                        $addonsPrice += floatval($v["options"][0]["price"]);
                                     }
-                                } else {
-                                    $addonsPrice += floatval($v["options"][0]["price"]);
-                                }
 
-                                ?>
-                                <div class="<?=$v["field-name"]?>">
-                                    <?
-                                    foreach($v["options"] as $option)
-                                    {
-                                        ?>
-                                        <div
-                                            <? if(strpos($v["field-name"], "extra-knop-lange-kant") === false) { ?>
-                                                data-val="<?=$option["label"]?>"
-                                            <? } else { ?>
-                                                data-val="<?=str_replace(" lange zijde", "", $option["label"]);?>"
-                                            <? } ?>
-                                        >
-                                            <?php echo get_product_addon_price_for_display_custom($option["price"])?>
-                                        </div>
-                                        <?
-                                    }
                                     ?>
-                                </div>
-                                <?
+                                    <div class="<?=$v["field-name"]?>">
+                                        <?
+                                        foreach($v["options"] as $option)
+                                        {
+                                            ?>
+                                            <div
+                                                <? if(strpos($v["field-name"], "extra-knop-lange-kant") === false) { ?>
+                                                    data-val="<?=$option["label"]?>"
+                                                <? } else { ?>
+                                                    data-val="<?=str_replace(" lange zijde", "", $option["label"]);?>"
+                                                <? } ?>
+                                            >
+                                                <?php echo get_product_addon_price_for_display_custom($option["price"])?>
+                                            </div>
+                                            <?
+                                        }
+                                        ?>
+                                    </div>
+                                    <?
+                                }
                             }
                             ?>
-                            <div class="product-price"><?=get_product_addon_price_for_display_custom($product->get_regular_price())?></div>
+                            <div class="product-price"><?=get_product_addon_price_for_display_custom($product ? $product->get_regular_price() : 0)?></div>
                             <?php
                             $mainProduct = $product;
-                            $product = new WC_Product(intval(get_field("key")));
-                            $keyPrice = $product->get_regular_price();
+                            $keyId = intval(get_field("key"));
+                            $keyProduct = $keyId ? wc_get_product($keyId) : null;
+                            $keyPrice = $keyProduct ? $keyProduct->get_regular_price() : 0;
                             ?>
                             <div class="key-price"><?php echo get_product_addon_price_for_display_custom($keyPrice)?></div>
                             <?php if(get_field("additional_product") > 0) { ?>
                                 <?php
-                                $additional_product = new WC_Product(get_field("additional_product"));
-                                $additional_price = $additional_product->get_regular_price();
+                                $additional_product = wc_get_product(get_field("additional_product"));
+                                if ($additional_product) {
+                                    $additional_price = $additional_product->get_regular_price();
                                 ?>
                                 <div class="additional-product"><?php echo $additional_product->get_id(); ?></div>
                                 <div class="additional-price"><?php echo get_product_addon_price_for_display_custom($additional_price); ?></div>
+                                <?php } ?>
                             <?php } ?>
                         </div>
-                        <h2><?php the_field("brand") ?><?php if(isset($additional_product)) { ?> + <?php echo $additional_product->get_name(); ?><?php } ?></h2>
+                        <h2><?php the_field("brand") ?><?php if(isset($additional_product) && $additional_product) { ?> + <?php echo $additional_product->get_name(); ?><?php } ?></h2>
                         <div class="img-wrapper"><?php echo $productImage; ?></div>
                         <div class="special-offer-wrapper">
                             <span class="special-offer">
@@ -621,8 +640,8 @@ if(!empty($optionImages)) {
                         </div>
 
                         <div itemtype="https://schema.org/Product" itemscope>
-                            <meta itemprop="name" content="<?php echo $mainProduct->get_name(); ?>" />
-                            <?php if($mainProduct->get_image_id()) { ?>
+                            <meta itemprop="name" content="<?php echo $mainProduct ? $mainProduct->get_name() : get_the_title(); ?>" />
+                            <?php if($mainProduct && $mainProduct->get_image_id()) { ?>
                                 <link itemprop="image" href="<?php echo wp_get_attachment_image_src( $mainProduct->get_image_id(), 'full' )[0]; ?>" />
                             <?php } ?>
                             <div itemprop="offers" itemtype="https://schema.org/Offer" itemscope>
