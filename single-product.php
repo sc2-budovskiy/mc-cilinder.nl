@@ -1,7 +1,9 @@
 <?php /* Template Name: Nabestellen Single Product
 @version     1.6.4 */ ?>
 
-<?php get_header();?>
+
+
+<?php get_header(); ?>
 
 <?php
 $excl_btw = isset($_COOKIE["excl_btw"]) && $_COOKIE["excl_btw"] ? true : false;

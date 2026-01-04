@@ -1886,3 +1886,48 @@ add_filter('woocommerce_cart_get_cart', function($cart_contents) {
 
     return $cart_contents;
 });
+
+/*
+ * Fix Duplicate Content & Sitemap for Technical Products
+ * 
+ * 1. Redirect technical products (/product/slug) to marketing pages (/slug)
+ * 2. Exclude these technical products from Yoast SEO Sitemap
+ */
+
+// 1. Redirect logic
+add_action( 'template_redirect', 'redirect_technical_products_to_marketing_pages' );
+function redirect_technical_products_to_marketing_pages() {
+    if ( is_product() ) {
+        $queried_object_id = get_queried_object_id();
+        // Check if ACF is active and field exists
+        if ( function_exists('get_field') ) {
+            $redirect_link = get_field('link', $queried_object_id);
+            if ( $redirect_link ) {
+                wp_redirect( $redirect_link, 301 );
+                exit;
+            }
+        }
+    }
+}
+
+// 2. Yoast SEO Sitemap Exclusion
+add_filter( 'wpseo_exclude_from_sitemap_by_post_ids', 'exclude_technical_products_from_sitemap' );
+function exclude_technical_products_from_sitemap( $excluded_posts ) {
+    // Use direct query to avoid recursive loops, memory issues, or timeouts with large product sets
+    global $wpdb;
+    $technical_product_ids = $wpdb->get_col( "
+        SELECT post_id 
+        FROM {$wpdb->postmeta} 
+        WHERE meta_key = 'link' AND meta_value != ''
+    " );
+
+    if ( ! empty( $technical_product_ids ) ) {
+        // Ensure IDs are integers and merge with existing exclusions
+        $ids_to_exclude = array_map( 'intval', $technical_product_ids );
+        $excluded_posts = array_merge( $excluded_posts, $ids_to_exclude );
+    }
+
+    return $excluded_posts;
+}
+
+
