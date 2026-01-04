@@ -1897,33 +1897,48 @@ add_filter('woocommerce_cart_get_cart', function($cart_contents) {
 // 1. Redirect logic
 add_action( 'template_redirect', 'redirect_technical_products_to_marketing_pages' );
 function redirect_technical_products_to_marketing_pages() {
-    if ( is_product() ) {
+    // Only target single product pages that are NOT in the admin area
+    if ( is_product() && ! is_admin() ) {
         $queried_object_id = get_queried_object_id();
-        // Check if ACF is active and field exists
+        $redirect_link = '';
+
+        // 1. Try ACF field first
         if ( function_exists('get_field') ) {
             $redirect_link = get_field('link', $queried_object_id);
-            if ( $redirect_link ) {
-                wp_redirect( $redirect_link, 301 );
-                exit;
+        }
+
+        // 2. Check for matching slug if ACF field is empty
+        if ( empty( $redirect_link ) ) {
+            $post = get_post( $queried_object_id );
+            if ( $post && ! empty( $post->post_name ) ) {
+                // Check if a standard marketing page with same slug exists
+                $marketing_page = get_page_by_path( $post->post_name, OBJECT, 'page' );
+                if ( $marketing_page ) {
+                    $redirect_link = home_url( '/' . $post->post_name . '/' );
+                } else {
+                    // 3. Robust fallback to /sluitplan/ for technical products without a specific page
+                    $redirect_link = home_url( '/sluitplan/' );
+                }
             }
+        }
+
+        if ( ! empty( $redirect_link ) ) {
+            wp_safe_redirect( $redirect_link, 301 );
+            exit;
         }
     }
 }
 
 // 2. Yoast SEO Sitemap Exclusion
+// Targeted solution: exclude individual product IDs instead of the entire post type
+// This keeps the product sitemap container active (preserving the /winkel/ archive)
 add_filter( 'wpseo_exclude_from_sitemap_by_post_ids', 'exclude_technical_products_from_sitemap' );
 function exclude_technical_products_from_sitemap( $excluded_posts ) {
-    // Use direct query to avoid recursive loops, memory issues, or timeouts with large product sets
     global $wpdb;
-    $technical_product_ids = $wpdb->get_col( "
-        SELECT post_id 
-        FROM {$wpdb->postmeta} 
-        WHERE meta_key = 'link' AND meta_value != ''
-    " );
+    $product_ids = $wpdb->get_col( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'product' AND post_status = 'publish'" );
 
-    if ( ! empty( $technical_product_ids ) ) {
-        // Ensure IDs are integers and merge with existing exclusions
-        $ids_to_exclude = array_map( 'intval', $technical_product_ids );
+    if ( ! empty( $product_ids ) ) {
+        $ids_to_exclude = array_map( 'intval', $product_ids );
         $excluded_posts = array_merge( $excluded_posts, $ids_to_exclude );
     }
 
