@@ -106,6 +106,7 @@ $options = get_option( 'theme_settings' ); ?>
 
     <?php endif; ?>
 
+    <?php if ( $order ) : ?>
     <!---->
     <div class="checkout-title payment-block-padding">U heeft besteld:</div>
     <div class="checkout-middle">
@@ -415,5 +416,6 @@ $options = get_option( 'theme_settings' ); ?>
         ?>
     </div>
     <div class="clear"></div>
+    <?php endif; ?>
     <!---->
 </div>
