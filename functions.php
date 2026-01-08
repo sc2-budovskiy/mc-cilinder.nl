@@ -234,13 +234,7 @@ function custom_redirect_after_purchase() {
 
 add_action('template_redirect', 'custom_redirect_after_purchase');
 
-add_action("template_redirect", 'redirection_function');
-function redirection_function(){
-    global $woocommerce;
-    if( is_cart() && WC()->cart->cart_contents_count == 0){
-        wp_safe_redirect( "/product-page/" );
-    }
-}
+
 
 add_action( 'template_redirect', 'set_cart_item_quantity' );
 function set_cart_item_quantity() {
