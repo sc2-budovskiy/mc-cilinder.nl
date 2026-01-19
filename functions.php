@@ -1939,4 +1939,26 @@ function exclude_technical_products_from_sitemap( $excluded_posts ) {
     return $excluded_posts;
 }
 
+// Exclude the cart page from Yoast sitemap entries (e.g. /page-sitemap.xml).
+add_filter( 'wpseo_sitemap_entry', 'exclude_cart_page_from_yoast_sitemap_entry', 10, 3 );
+function exclude_cart_page_from_yoast_sitemap_entry( $url, $type = null, $post = null ) {
+    $cart_page_id = function_exists( 'wc_get_page_id' ) ? wc_get_page_id( 'cart' ) : 0;
+    if ( ! $cart_page_id ) {
+        return $url;
+    }
+
+    if ( $post instanceof WP_Post && (int) $post->ID === (int) $cart_page_id ) {
+        return false;
+    }
+
+    if ( is_array( $url ) && isset( $url['loc'] ) ) {
+        $cart_url = get_permalink( $cart_page_id );
+        if ( $cart_url && rtrim( $url['loc'], '/' ) === rtrim( $cart_url, '/' ) ) {
+            return false;
+        }
+    }
+
+    return $url;
+}
+
 
