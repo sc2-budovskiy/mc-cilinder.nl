@@ -148,44 +148,48 @@ do_action( 'woocommerce_before_cart' ); ?>
                                 $doorName = "";
                                 $keyType = "";
                                 $userImageUploaded = false;
-                                foreach($cart_item["addons"] as $meta) {
-                                    //echo '<div class="ccc">'.$meta["name"].' : '.$meta["value"].'</div>';
+                                                $otherAddons = array();
+                                                foreach($cart_item["addons"] as $meta) {
+                                                    //echo '<div class="ccc">'.$meta["name"].' : '.$meta["value"].'</div>';
 
-                                    if($meta["name"] == "Uitvoering") {
-                                        $color = $meta["value"];
-                                    }
-                                    elseif($meta["name"] == "Buitenzijde/Binnenzijde"/*"Maat"*/ || $meta["name"] == "Cilindermaat") {
-                                        $size = $meta["value"];
-                                    }
-                                    elseif($meta["name"] == "Door type") {
-                                        if($meta["value"] == "Binnendeur") {
-                                            $size = $meta["value"];
-                                        }
-                                    }
-                                    elseif($meta["name"] == "Buitenzijde"/*"Extra knop korte kant"*/) {
-                                        $knopShort = $meta["value"];
-                                    }
-                                    elseif($meta["name"] == "Binnenzijde"/*"Extra knop lange kant"*/) {
-                                        $knopLong = $meta["value"];
-                                    }
-                                    elseif($meta["name"] == "Door name")
-                                    {
-                                        $doorName = $meta["value"];
-                                        $doorNames[$doorName] = $doorName;
-                                    }
-                                    elseif($meta["name"] == "Sleutel type") {
-                                        $keyType = $meta["value"];
-                                    }
-                                    elseif($meta["name"] == "User image") {
-                                        $userImageUploaded = true;
-                                    }
-                                    elseif($meta["name"] == "Maat buitenzijde") {
-                                        $outerSize = $meta["value"];
-                                    }
-                                    elseif($meta["name"] == "Maat binnenzijde") {
-                                        $innerSize = $meta["value"];
-                                    }
-                                }
+                                                    if($meta["name"] == "Uitvoering") {
+                                                        $color = $meta["value"];
+                                                    }
+                                                    elseif($meta["name"] == "Buitenzijde/Binnenzijde"/*"Maat"*/ || $meta["name"] == "Cilindermaat") {
+                                                        $size = $meta["value"];
+                                                    }
+                                                    elseif($meta["name"] == "Door type") {
+                                                        if($meta["value"] == "Binnendeur") {
+                                                            $size = $meta["value"];
+                                                        }
+                                                    }
+                                                    elseif($meta["name"] == "Buitenzijde"/*"Extra knop korte kant"*/) {
+                                                        $knopShort = $meta["value"];
+                                                    }
+                                                    elseif($meta["name"] == "Binnenzijde"/*"Extra knop lange kant"*/) {
+                                                        $knopLong = $meta["value"];
+                                                    }
+                                                    elseif($meta["name"] == "Door name")
+                                                    {
+                                                        $doorName = $meta["value"];
+                                                        $doorNames[$doorName] = $doorName;
+                                                    }
+                                                    elseif($meta["name"] == "Sleutel type") {
+                                                        $keyType = $meta["value"];
+                                                    }
+                                                    elseif($meta["name"] == "User image") {
+                                                        $userImageUploaded = true;
+                                                    }
+                                                    elseif($meta["name"] == "Maat buitenzijde") {
+                                                        $outerSize = $meta["value"];
+                                                    }
+                                                    elseif($meta["name"] == "Maat binnenzijde") {
+                                                        $innerSize = $meta["value"];
+                                                    }
+                                                    else {
+                                                        $otherAddons[] = $meta["name"] . ": " . $meta["value"];
+                                                    }
+                                                }
 
                                 $pId = $_product->get_id();
                                 $var = get_product_addons($pId);
@@ -403,6 +407,13 @@ do_action( 'woocommerce_before_cart' ); ?>
                                             </div>
                                             <input class="user-image" type="file" name="addon-<?php echo sanitize_title($userImage["field-name"]); ?>-<?php echo sanitize_title( $userImage['options'][0]['label'] ); ?>" style="display:none;" />
                                         <?php } ?>
+                                        <?php if(!empty($otherAddons)) { ?>
+                                            <div class="col-md-12">
+                                                <?php foreach($otherAddons as $addOn) { ?>
+                                                    <div class="other-addon" style="font-size: 14px; color: #666; margin-top: 5px;"><strong><?php echo $addOn; ?></strong></div>
+                                                <?php } ?>
+                                            </div>
+                                        <?php } ?>
                                     </div>
                                 </div>
                             </div>
@@ -539,6 +550,13 @@ do_action( 'woocommerce_before_cart' ); ?>
                                                 <div class="param-value"><?php echo wc_price( $cart_item['line_total'] + (!$excl_btw ? $cart_item['line_tax'] : 0) ); ?></div>
                                             </div>
                                         </div>
+                                        <?php if(!empty($cart_item["addons"])) { ?>
+                                            <div class="col-md-12">
+                                                <?php foreach($cart_item["addons"] as $meta) { ?>
+                                                    <div class="other-addon" style="font-size: 14px; color: #666; margin-top: 5px;"><strong><?php echo $meta["name"]; ?>: <?php echo $meta["value"]; ?></strong></div>
+                                                <?php } ?>
+                                            </div>
+                                        <?php } ?>
                                     </div>
                                 </div>
                             </div>
@@ -792,6 +810,15 @@ do_action( 'woocommerce_before_cart' ); ?>
                                 <label class="col-sm-9 col-xs-6 control-label">
                                     <?php echo apply_filters( 'woocommerce_cart_item_name', $_product->get_title(), $cart_item, $cart_item_key ) . "&nbsp;"; ?>
                                     <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times; %s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); ?>
+                                    <?php if(!empty($cart_item["addons"])) { ?>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <?php foreach($cart_item["addons"] as $meta) { ?>
+                                                    <div class="other-addon" style="font-size: 12px; color: #666; margin-top: 2px;"><strong><?php echo $meta["name"]; ?>: <?php echo $meta["value"]; ?></strong></div>
+                                                <?php } ?>
+                                            </div>
+                                        </div>
+                                    <?php } ?>
                                 </label>
                                 <div class="col-sm-3 col-xs-6 form-control-static text-right">
                                     <?php echo wc_price( $cart_item['line_total'] ); ?>

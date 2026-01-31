@@ -275,8 +275,28 @@ if($pId) {
                                     foreach ( $item["options"] as $oInd => $opt ) {
                                         ?>
                                         <div class="sp-option delivery-list-item">
-                                            <label for="addon-<?php echo sanitize_title($item["field-name"]) . "-" . $oInd; ?>"><input id="addon-<?php echo sanitize_title($item["field-name"]) . "-" . $oInd; ?>" type="radio" name="addon-<?php echo sanitize_title($item["field-name"]); ?><?php if($item["type"] == "checkbox") { echo "[]"; } ?>" value="<?php echo sanitize_title($opt["label"]); ?>"<?php if($oInd == 0) { ?> checked="checked"<?php } ?> /><span
-                                                        class="text"><?php echo $opt["label"]; ?> <span class="price"><?php if($opt["price"] > 0) { echo sprintf("+€%01.2f", get_product_addon_price_for_display_custom( $opt["price"] )); } ?></span></span></label>
+                                            <?php 
+                                            $field_id = "addon-" . sanitize_title($item["field-name"]) . "-" . $oInd;
+                                            $field_name = "addon-" . sanitize_title($item["field-name"]) . ($item["type"] == "checkbox" ? "[]" : "");
+                                            $field_value = sanitize_title($opt["label"]) . ($item["type"] == "select" ? "-" . ($oInd + 1) : "");
+                                            ?>
+                                            <label for="<?php echo $field_id; ?>">
+                                                <input 
+                                                    id="<?php echo $field_id; ?>" 
+                                                    type="radio" 
+                                                    name="<?php echo $field_name; ?>" 
+                                                    value="<?php echo $field_value; ?>"
+                                                    <?php checked($oInd, 0); ?> 
+                                                />
+                                                <span class="text">
+                                                    <?php echo $opt["label"]; ?> 
+                                                    <span class="price">
+                                                        <?php if($opt["price"] > 0) { 
+                                                            echo sprintf("+€%01.2f", get_product_addon_price_for_display_custom( $opt["price"] )); 
+                                                        } ?>
+                                                    </span>
+                                                </span>
+                                            </label>
                                         </div>
                                         <?php
                                     }
