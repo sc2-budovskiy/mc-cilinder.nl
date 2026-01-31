@@ -131,7 +131,7 @@ if($pId) {
                     <?php
                     if(!empty($pVar)) {
                         foreach($pVar as $ind => $item) {
-                            if(!empty($item["options"]) && isset($item["options"][0]["label"]) && $item["options"][0]["label"] && $ind < count($pVar) - 2) {
+                            if(!empty($item["options"]) && isset($item["options"][0]["label"]) && $item["options"][0]["label"] && $item["type"] != "file_upload" && stripos($item["name"], "sleutel") === false) {
                                 ?>
                                 <div class="ow-item">
                                     <?php
@@ -268,14 +268,14 @@ if($pId) {
                         <?php
                         if(!empty($pVar)) {
                             foreach($pVar as $ind => $item) {
-                                if(!empty($item["options"]) && isset($item["options"][0]["label"]) && $item["options"][0]["label"] && $ind < count($pVar) - 2) {
+                                if(!empty($item["options"]) && isset($item["options"][0]["label"]) && $item["options"][0]["label"] && $item["type"] != "file_upload" && stripos($item["name"], "sleutel") === false) {
                                     ?>
                                     <div class="delivery-title"><?php echo $item["name"]; ?>:</div>
                                     <?php
                                     foreach ( $item["options"] as $oInd => $opt ) {
                                         ?>
                                         <div class="sp-option delivery-list-item">
-                                            <label for="addon-<?php echo sanitize_title($item["field-name"]) . "-" . $oInd; ?>"><input id="addon-<?php echo sanitize_title($item["field-name"]) . "-" . $oInd; ?>" type="radio" name="addon-<?php echo sanitize_title($item["field-name"]); ?>" value="<?php echo sanitize_title($opt["label"]); ?>"<?php if($oInd == 0) { ?> checked="checked"<?php } ?> /><span
+                                            <label for="addon-<?php echo sanitize_title($item["field-name"]) . "-" . $oInd; ?>"><input id="addon-<?php echo sanitize_title($item["field-name"]) . "-" . $oInd; ?>" type="radio" name="addon-<?php echo sanitize_title($item["field-name"]); ?><?php if($item["type"] == "checkbox") { echo "[]"; } ?>" value="<?php echo sanitize_title($opt["label"]); ?>"<?php if($oInd == 0) { ?> checked="checked"<?php } ?> /><span
                                                         class="text"><?php echo $opt["label"]; ?> <span class="price"><?php if($opt["price"] > 0) { echo sprintf("+€%01.2f", get_product_addon_price_for_display_custom( $opt["price"] )); } ?></span></span></label>
                                         </div>
                                         <?php
