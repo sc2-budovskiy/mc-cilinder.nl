@@ -1,5 +1,10 @@
 <?php
 
+$mc_delivery_v2_bootstrap = __DIR__ . '/includes/delivery-v2/bootstrap.php';
+if ( file_exists( $mc_delivery_v2_bootstrap ) ) {
+    require_once $mc_delivery_v2_bootstrap;
+}
+
 add_action( 'after_setup_theme', 'woocommerce_support' );
 function woocommerce_support() {
     add_theme_support( 'woocommerce' );
