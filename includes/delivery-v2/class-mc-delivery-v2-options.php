@@ -266,40 +266,13 @@ if ( ! class_exists( 'MC_Delivery_V2_Options' ) ) {
                 return $defaults;
             }
 
-            $valid_scenarios = array_keys( self::get_scenario_labels() );
-            $valid_methods   = array_keys( self::get_method_labels() );
-            $rows            = array();
-
-            foreach ( $value['rows'] as $row ) {
-                if ( ! is_array( $row ) ) {
-                    continue;
-                }
-
-                $scenario_key = isset( $row['scenario_key'] ) ? sanitize_text_field( $row['scenario_key'] ) : '';
-                $method_key   = isset( $row['method_key'] ) ? sanitize_text_field( $row['method_key'] ) : '';
-
-                if ( ! in_array( $scenario_key, $valid_scenarios, true ) || ! in_array( $method_key, $valid_methods, true ) ) {
-                    continue;
-                }
-
-                $rows[] = array(
-                    'scenario_key'         => $scenario_key,
-                    'method_key'           => $method_key,
-                    'title_checkout'       => isset( $row['title_checkout'] ) ? sanitize_text_field( $row['title_checkout'] ) : '',
-                    'delivery_promise_text'=> isset( $row['delivery_promise_text'] ) ? sanitize_text_field( $row['delivery_promise_text'] ) : '',
-                    'price_expected'       => isset( $row['price_expected'] ) ? sanitize_text_field( $row['price_expected'] ) : '',
-                    'enabled'              => empty( $row['enabled'] ) ? 0 : 1,
-                    'is_default'           => empty( $row['is_default'] ) ? 0 : 1,
-                    'sort_order'           => isset( $row['sort_order'] ) ? intval( $row['sort_order'] ) : 0,
-                    'allowed_countries'    => isset( $row['allowed_countries'] ) && is_array( $row['allowed_countries'] ) ? array_map( 'sanitize_text_field', $row['allowed_countries'] ) : array( 'NL' ),
-                    'cutoff_rule_key'      => isset( $row['cutoff_rule_key'] ) ? sanitize_text_field( $row['cutoff_rule_key'] ) : '',
-                    'resolved_rate_id'     => isset( $row['resolved_rate_id'] ) ? sanitize_text_field( $row['resolved_rate_id'] ) : '',
-                );
-            }
+            $rows = self::normalize_matrix_rows( $value['rows'] );
 
             if ( empty( $rows ) ) {
                 $rows = $defaults['rows'];
             }
+
+            $rows = self::enforce_one_default_per_scenario( $rows );
 
             return array(
                 'version'    => 1,
@@ -421,6 +394,195 @@ if ( ! class_exists( 'MC_Delivery_V2_Options' ) ) {
             return $rows;
         }
 
+        private static function normalize_matrix_rows( $rows ) {
+            $valid_scenarios = array_keys( self::get_scenario_labels() );
+            $valid_methods   = array_keys( self::get_method_labels() );
+            $row_map         = array();
+
+            foreach ( $rows as $raw_row ) {
+                $sanitized_row = self::sanitize_matrix_row( $raw_row, $valid_scenarios, $valid_methods );
+                if ( empty( $sanitized_row ) ) {
+                    continue;
+                }
+
+                $map_key            = $sanitized_row['scenario_key'] . '|' . $sanitized_row['method_key'];
+                $row_map[ $map_key ] = $sanitized_row;
+            }
+
+            $normalized = array();
+            foreach ( self::build_default_matrix_rows() as $default_row ) {
+                $map_key = $default_row['scenario_key'] . '|' . $default_row['method_key'];
+
+                if ( isset( $row_map[ $map_key ] ) ) {
+                    $row = $row_map[ $map_key ];
+                } else {
+                    $row = $default_row;
+                }
+
+                if ( empty( $row['cutoff_rule_key'] ) && ! empty( $default_row['cutoff_rule_key'] ) ) {
+                    $row['cutoff_rule_key'] = $default_row['cutoff_rule_key'];
+                }
+
+                if ( empty( $row['allowed_countries'] ) || ! is_array( $row['allowed_countries'] ) ) {
+                    $row['allowed_countries'] = array( 'NL' );
+                }
+
+                $normalized[] = $row;
+            }
+
+            return $normalized;
+        }
+
+        private static function sanitize_matrix_row( $row, $valid_scenarios, $valid_methods ) {
+            if ( ! is_array( $row ) ) {
+                return null;
+            }
+
+            $scenario_key = isset( $row['scenario_key'] ) ? sanitize_text_field( $row['scenario_key'] ) : '';
+            $method_key   = isset( $row['method_key'] ) ? sanitize_text_field( $row['method_key'] ) : '';
+
+            if ( ! in_array( $scenario_key, $valid_scenarios, true ) || ! in_array( $method_key, $valid_methods, true ) ) {
+                return null;
+            }
+
+            return array(
+                'scenario_key'          => $scenario_key,
+                'method_key'            => $method_key,
+                'title_checkout'        => isset( $row['title_checkout'] ) ? sanitize_text_field( $row['title_checkout'] ) : '',
+                'delivery_promise_text' => isset( $row['delivery_promise_text'] ) ? sanitize_text_field( $row['delivery_promise_text'] ) : '',
+                'price_expected'        => isset( $row['price_expected'] ) ? sanitize_text_field( $row['price_expected'] ) : '',
+                'enabled'               => empty( $row['enabled'] ) ? 0 : 1,
+                'is_default'            => empty( $row['is_default'] ) ? 0 : 1,
+                'sort_order'            => isset( $row['sort_order'] ) ? intval( $row['sort_order'] ) : 0,
+                'allowed_countries'     => self::normalize_allowed_countries( isset( $row['allowed_countries'] ) ? $row['allowed_countries'] : array( 'NL' ) ),
+                'cutoff_rule_key'       => isset( $row['cutoff_rule_key'] ) ? sanitize_text_field( $row['cutoff_rule_key'] ) : '',
+                'resolved_rate_id'      => isset( $row['resolved_rate_id'] ) ? sanitize_text_field( $row['resolved_rate_id'] ) : '',
+            );
+        }
+
+        private static function normalize_allowed_countries( $value ) {
+            if ( is_string( $value ) ) {
+                $value = array_map( 'trim', explode( ',', $value ) );
+            }
+
+            if ( ! is_array( $value ) ) {
+                return array( 'NL' );
+            }
+
+            $countries = array();
+            foreach ( $value as $country_code ) {
+                $country_code = strtoupper( sanitize_text_field( $country_code ) );
+                if ( $country_code === '' ) {
+                    continue;
+                }
+
+                $countries[] = $country_code;
+            }
+
+            $countries = array_values( array_unique( $countries ) );
+
+            if ( empty( $countries ) ) {
+                return array( 'NL' );
+            }
+
+            return $countries;
+        }
+
+        private static function enforce_one_default_per_scenario( $rows ) {
+            if ( empty( $rows ) || ! is_array( $rows ) ) {
+                return $rows;
+            }
+
+            $scenario_labels = self::get_scenario_labels();
+            $method_labels   = self::get_method_labels();
+            $scenario_rows   = array();
+
+            foreach ( $rows as $index => $row ) {
+                if ( empty( $row['scenario_key'] ) ) {
+                    continue;
+                }
+
+                if ( ! isset( $scenario_rows[ $row['scenario_key'] ] ) ) {
+                    $scenario_rows[ $row['scenario_key'] ] = array();
+                }
+
+                $scenario_rows[ $row['scenario_key'] ][] = $index;
+            }
+
+            foreach ( $scenario_rows as $scenario_key => $indexes ) {
+                $sorted_indexes = $indexes;
+                usort(
+                    $sorted_indexes,
+                    function ( $left_index, $right_index ) use ( $rows ) {
+                        $left_order  = isset( $rows[ $left_index ]['sort_order'] ) ? intval( $rows[ $left_index ]['sort_order'] ) : 0;
+                        $right_order = isset( $rows[ $right_index ]['sort_order'] ) ? intval( $rows[ $right_index ]['sort_order'] ) : 0;
+
+                        if ( $left_order === $right_order ) {
+                            $left_method  = isset( $rows[ $left_index ]['method_key'] ) ? $rows[ $left_index ]['method_key'] : '';
+                            $right_method = isset( $rows[ $right_index ]['method_key'] ) ? $rows[ $right_index ]['method_key'] : '';
+                            return strcmp( $left_method, $right_method );
+                        }
+
+                        return ( $left_order < $right_order ) ? -1 : 1;
+                    }
+                );
+
+                $default_candidates = array();
+                foreach ( $sorted_indexes as $index ) {
+                    if ( ! empty( $rows[ $index ]['is_default'] ) && ! empty( $rows[ $index ]['enabled'] ) ) {
+                        $default_candidates[] = $index;
+                    }
+                }
+
+                $selected_default_index = null;
+
+                if ( count( $default_candidates ) > 1 ) {
+                    $selected_default_index = $default_candidates[0];
+
+                    add_settings_error(
+                        self::OPTION_MATRIX,
+                        'matrix_multiple_defaults_' . $scenario_key,
+                        sprintf(
+                            'Scenario "%1$s" had multiple default methods. Kept "%2$s".',
+                            isset( $scenario_labels[ $scenario_key ] ) ? $scenario_labels[ $scenario_key ] : $scenario_key,
+                            isset( $method_labels[ $rows[ $selected_default_index ]['method_key'] ] ) ? $method_labels[ $rows[ $selected_default_index ]['method_key'] ] : $rows[ $selected_default_index ]['method_key']
+                        ),
+                        'warning'
+                    );
+                } elseif ( count( $default_candidates ) === 1 ) {
+                    $selected_default_index = $default_candidates[0];
+                } else {
+                    foreach ( $sorted_indexes as $index ) {
+                        if ( ! empty( $rows[ $index ]['enabled'] ) ) {
+                            $selected_default_index = $index;
+                            break;
+                        }
+                    }
+
+                    if ( $selected_default_index === null ) {
+                        $selected_default_index = reset( $sorted_indexes );
+                    }
+
+                    add_settings_error(
+                        self::OPTION_MATRIX,
+                        'matrix_missing_default_' . $scenario_key,
+                        sprintf(
+                            'Scenario "%1$s" had no enabled default method. Set "%2$s" as default.',
+                            isset( $scenario_labels[ $scenario_key ] ) ? $scenario_labels[ $scenario_key ] : $scenario_key,
+                            isset( $method_labels[ $rows[ $selected_default_index ]['method_key'] ] ) ? $method_labels[ $rows[ $selected_default_index ]['method_key'] ] : $rows[ $selected_default_index ]['method_key']
+                        ),
+                        'warning'
+                    );
+                }
+
+                foreach ( $indexes as $index ) {
+                    $rows[ $index ]['is_default'] = ( $index === $selected_default_index ) ? 1 : 0;
+                }
+            }
+
+            return $rows;
+        }
+
         private static function maybe_add_option( $option_name, $default_value ) {
             if ( get_option( $option_name, null ) === null ) {
                 add_option( $option_name, $default_value, '', false );
@@ -446,4 +608,3 @@ if ( ! class_exists( 'MC_Delivery_V2_Options' ) ) {
         }
     }
 }
-

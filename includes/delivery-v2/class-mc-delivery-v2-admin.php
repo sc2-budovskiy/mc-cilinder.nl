@@ -132,39 +132,119 @@ if ( ! class_exists( 'MC_Delivery_V2_Admin' ) ) {
                     <?php submit_button( 'Save Runtime Flags' ); ?>
                 </form>
 
-                <h2>Matrix Rows (Read-Only in this step)</h2>
-                <table class="widefat striped">
-                    <thead>
-                        <tr>
-                            <th>Scenario</th>
-                            <th>Method</th>
-                            <th>Expected Price</th>
-                            <th>Cut-off Rule</th>
-                            <th>Default</th>
-                            <th>Enabled</th>
-                            <th>Resolved Rate ID</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ( empty( $rows ) ) : ?>
+                <h2>Matrix Rows</h2>
+                <p>Configure checkout label, delivery promise, order, enable state, and default per scenario. One enabled default per scenario is required and auto-corrected on save if needed.</p>
+
+                <?php settings_errors( MC_Delivery_V2_Options::OPTION_MATRIX ); ?>
+                <form method="post" action="options.php">
+                    <?php settings_fields( 'mc_delivery_matrix_v2_matrix' ); ?>
+                    <table class="widefat striped">
+                        <thead>
                             <tr>
-                                <td colspan="7">No matrix rows available.</td>
+                                <th>Scenario</th>
+                                <th>Method</th>
+                                <th>Enabled</th>
+                                <th>Default</th>
+                                <th>Sort</th>
+                                <th>Checkout Title</th>
+                                <th>Delivery Promise</th>
+                                <th>Expected Price</th>
+                                <th>Cut-off Rule</th>
+                                <th>Resolved Rate ID</th>
                             </tr>
-                        <?php else : ?>
-                            <?php foreach ( $rows as $row ) : ?>
+                        </thead>
+                        <tbody>
+                            <?php if ( empty( $rows ) ) : ?>
                                 <tr>
-                                    <td><?php echo esc_html( isset( $scenario_labels[ $row['scenario_key'] ] ) ? $scenario_labels[ $row['scenario_key'] ] : $row['scenario_key'] ); ?></td>
-                                    <td><?php echo esc_html( isset( $method_labels[ $row['method_key'] ] ) ? $method_labels[ $row['method_key'] ] : $row['method_key'] ); ?></td>
-                                    <td><?php echo esc_html( isset( $row['price_expected'] ) ? $row['price_expected'] : '' ); ?></td>
-                                    <td><?php echo esc_html( isset( $row['cutoff_rule_key'] ) ? $row['cutoff_rule_key'] : '' ); ?></td>
-                                    <td><?php echo ! empty( $row['is_default'] ) ? 'Yes' : 'No'; ?></td>
-                                    <td><?php echo ! empty( $row['enabled'] ) ? 'Yes' : 'No'; ?></td>
-                                    <td><?php echo esc_html( isset( $row['resolved_rate_id'] ) ? $row['resolved_rate_id'] : '' ); ?></td>
+                                    <td colspan="10">No matrix rows available.</td>
                                 </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+                            <?php else : ?>
+                                <?php foreach ( $rows as $row_index => $row ) : ?>
+                                    <?php
+                                    $scenario_key = isset( $row['scenario_key'] ) ? $row['scenario_key'] : '';
+                                    $method_key   = isset( $row['method_key'] ) ? $row['method_key'] : '';
+                                    $base_name    = MC_Delivery_V2_Options::OPTION_MATRIX . '[rows][' . $row_index . ']';
+                                    $allowed_countries = isset( $row['allowed_countries'] ) && is_array( $row['allowed_countries'] ) ? $row['allowed_countries'] : array( 'NL' );
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <?php echo esc_html( isset( $scenario_labels[ $scenario_key ] ) ? $scenario_labels[ $scenario_key ] : $scenario_key ); ?>
+                                            <input type="hidden" name="<?php echo esc_attr( $base_name ); ?>[scenario_key]" value="<?php echo esc_attr( $scenario_key ); ?>" />
+                                            <?php foreach ( $allowed_countries as $country_code ) : ?>
+                                                <input type="hidden" name="<?php echo esc_attr( $base_name ); ?>[allowed_countries][]" value="<?php echo esc_attr( $country_code ); ?>" />
+                                            <?php endforeach; ?>
+                                        </td>
+                                        <td>
+                                            <?php echo esc_html( isset( $method_labels[ $method_key ] ) ? $method_labels[ $method_key ] : $method_key ); ?>
+                                            <input type="hidden" name="<?php echo esc_attr( $base_name ); ?>[method_key]" value="<?php echo esc_attr( $method_key ); ?>" />
+                                        </td>
+                                        <td>
+                                            <label>
+                                                <input
+                                                    type="checkbox"
+                                                    name="<?php echo esc_attr( $base_name ); ?>[enabled]"
+                                                    value="1"
+                                                    <?php checked( ! empty( $row['enabled'] ) ); ?>
+                                                />
+                                            </label>
+                                        </td>
+                                        <td>
+                                            <label>
+                                                <input
+                                                    type="checkbox"
+                                                    name="<?php echo esc_attr( $base_name ); ?>[is_default]"
+                                                    value="1"
+                                                    <?php checked( ! empty( $row['is_default'] ) ); ?>
+                                                />
+                                            </label>
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="number"
+                                                class="small-text"
+                                                name="<?php echo esc_attr( $base_name ); ?>[sort_order]"
+                                                value="<?php echo esc_attr( isset( $row['sort_order'] ) ? intval( $row['sort_order'] ) : 0 ); ?>"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                class="regular-text"
+                                                name="<?php echo esc_attr( $base_name ); ?>[title_checkout]"
+                                                value="<?php echo esc_attr( isset( $row['title_checkout'] ) ? $row['title_checkout'] : '' ); ?>"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                class="regular-text"
+                                                name="<?php echo esc_attr( $base_name ); ?>[delivery_promise_text]"
+                                                value="<?php echo esc_attr( isset( $row['delivery_promise_text'] ) ? $row['delivery_promise_text'] : '' ); ?>"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                class="small-text"
+                                                name="<?php echo esc_attr( $base_name ); ?>[price_expected]"
+                                                value="<?php echo esc_attr( isset( $row['price_expected'] ) ? $row['price_expected'] : '' ); ?>"
+                                            />
+                                        </td>
+                                        <td>
+                                            <?php echo esc_html( isset( $row['cutoff_rule_key'] ) ? $row['cutoff_rule_key'] : '' ); ?>
+                                            <input type="hidden" name="<?php echo esc_attr( $base_name ); ?>[cutoff_rule_key]" value="<?php echo esc_attr( isset( $row['cutoff_rule_key'] ) ? $row['cutoff_rule_key'] : '' ); ?>" />
+                                        </td>
+                                        <td>
+                                            <?php echo esc_html( isset( $row['resolved_rate_id'] ) ? $row['resolved_rate_id'] : '' ); ?>
+                                            <input type="hidden" name="<?php echo esc_attr( $base_name ); ?>[resolved_rate_id]" value="<?php echo esc_attr( isset( $row['resolved_rate_id'] ) ? $row['resolved_rate_id'] : '' ); ?>" />
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                    <?php submit_button( 'Save Matrix' ); ?>
+                </form>
 
                 <h2>Registered Option Keys</h2>
                 <ul>

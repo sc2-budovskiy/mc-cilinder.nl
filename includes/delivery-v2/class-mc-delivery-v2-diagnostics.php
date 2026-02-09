@@ -13,6 +13,7 @@ if ( ! class_exists( 'MC_Delivery_V2_Diagnostics' ) ) {
             $checks[] = self::check_runtime_mode();
             $checks[] = self::check_runtime_resolution();
             $checks[] = self::check_matrix_rows();
+            $checks[] = self::check_scenario_defaults();
             $checks[] = self::check_mapping_coverage();
             $checks[] = self::check_mapping_rate_existence();
             $checks[] = self::check_nl_zone_count();
@@ -87,6 +88,60 @@ if ( ! class_exists( 'MC_Delivery_V2_Diagnostics' ) ) {
                 'label'   => 'Matrix rows',
                 'status'  => 'ok',
                 'details' => 'Rows loaded: ' . count( $rows ),
+            );
+        }
+
+        private static function check_scenario_defaults() {
+            $rows            = MC_Delivery_V2_Matrix_Service::get_rows();
+            $scenario_labels = MC_Delivery_V2_Options::get_scenario_labels();
+            $scenario_stats  = array();
+            $messages        = array();
+            $status          = 'ok';
+
+            foreach ( array_keys( $scenario_labels ) as $scenario_key ) {
+                $scenario_stats[ $scenario_key ] = array(
+                    'rows'             => 0,
+                    'enabled_defaults' => 0,
+                );
+            }
+
+            foreach ( $rows as $row ) {
+                if ( empty( $row['scenario_key'] ) || ! isset( $scenario_stats[ $row['scenario_key'] ] ) ) {
+                    continue;
+                }
+
+                $scenario_stats[ $row['scenario_key'] ]['rows']++;
+
+                if ( ! empty( $row['enabled'] ) && ! empty( $row['is_default'] ) ) {
+                    $scenario_stats[ $row['scenario_key'] ]['enabled_defaults']++;
+                }
+            }
+
+            foreach ( $scenario_stats as $scenario_key => $stats ) {
+                $scenario_label = isset( $scenario_labels[ $scenario_key ] ) ? $scenario_labels[ $scenario_key ] : $scenario_key;
+
+                if ( $stats['rows'] === 0 ) {
+                    $status     = 'warning';
+                    $messages[] = 'No matrix rows configured for scenario "' . $scenario_label . '".';
+                    continue;
+                }
+
+                if ( $stats['enabled_defaults'] === 1 ) {
+                    continue;
+                }
+
+                $status = 'warning';
+                if ( $stats['enabled_defaults'] === 0 ) {
+                    $messages[] = 'No enabled default method for scenario "' . $scenario_label . '".';
+                } else {
+                    $messages[] = 'Multiple enabled defaults for scenario "' . $scenario_label . '".';
+                }
+            }
+
+            return array(
+                'label'   => 'Scenario defaults',
+                'status'  => $status,
+                'details' => empty( $messages ) ? 'Exactly one enabled default method configured per scenario.' : implode( '; ', $messages ),
             );
         }
 
