@@ -5,6 +5,12 @@ if ( file_exists( $mc_delivery_v2_bootstrap ) ) {
     require_once $mc_delivery_v2_bootstrap;
 }
 
+if ( ! function_exists( 'mc_delivery_v2_is_active' ) ) {
+    function mc_delivery_v2_is_active() {
+        return class_exists( 'MC_Delivery_V2_Runtime' ) && MC_Delivery_V2_Runtime::is_enabled_for_request();
+    }
+}
+
 add_action( 'after_setup_theme', 'woocommerce_support' );
 function woocommerce_support() {
     add_theme_support( 'woocommerce' );
@@ -953,6 +959,10 @@ function my_new_wc_order_statuses( $order_statuses ) {
 
 add_filter( 'woocommerce_package_rates', 'hide_date_shipping', 10, 2 );
 function hide_date_shipping( $rates, $package ) {
+    if ( mc_delivery_v2_is_active() ) {
+        return $rates;
+    }
+
     $isKeyplan = false;
     foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
         $_product     = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
@@ -974,6 +984,10 @@ function hide_date_shipping( $rates, $package ) {
 }
 
 function action_woocommerce_load_shipping_methods() {
+    if ( mc_delivery_v2_is_active() ) {
+        return;
+    }
+
     if(!is_admin()) {
         if ( ! session_id() ) {
             session_start();
@@ -988,6 +1002,10 @@ function action_woocommerce_load_shipping_methods() {
 }
 add_action( 'woocommerce_load_shipping_methods', 'action_woocommerce_load_shipping_methods');
 function change_deilvery_label( $label, $method ) {
+    if ( mc_delivery_v2_is_active() ) {
+        return $label;
+    }
+
     $noDateShippingId = "flat_rate:26";
     $label = $method->get_label();
     $isKeyplan = false;
@@ -1055,6 +1073,10 @@ function checkout_update_refresh_shipping_methods( $post_data ) {
 }
 add_filter( 'woocommerce_package_rates' , 'my_sort_shipping_methods', 10, 2 );
 function my_sort_shipping_methods( $rates, $package ) {
+    if ( mc_delivery_v2_is_active() ) {
+        return $rates;
+    }
+
     if ( empty( $rates ) ) return;
     if ( ! is_array( $rates ) ) return;
 
@@ -1332,6 +1354,10 @@ function getClosestWeekDay($w, $weekdays)
 
 add_filter( 'woocommerce_checkout_create_order', 'change_delivery_date', 10, 1 );
 function change_delivery_date($order) {
+    if ( mc_delivery_v2_is_active() ) {
+        return $order;
+    }
+
     $newDate = @$_POST['user_deliverydate'] ? sanitize_text_field( $_POST['user_deliverydate'] ) : sanitize_text_field( @WC()->session->get( 'user_deliverydate' ) );
     if($newDate) {
         $_POST["h_deliverydate_0"] = $newDate;

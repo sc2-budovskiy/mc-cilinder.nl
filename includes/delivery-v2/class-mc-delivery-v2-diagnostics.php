@@ -11,6 +11,7 @@ if ( ! class_exists( 'MC_Delivery_V2_Diagnostics' ) ) {
 
             $checks[] = self::check_woocommerce();
             $checks[] = self::check_runtime_mode();
+            $checks[] = self::check_runtime_resolution();
             $checks[] = self::check_matrix_rows();
             $checks[] = self::check_mapping_coverage();
             $checks[] = self::check_mapping_rate_existence();
@@ -39,6 +40,35 @@ if ( ! class_exists( 'MC_Delivery_V2_Diagnostics' ) ) {
                 'label'   => 'Runtime mode',
                 'status'  => isset( $modes[ $mode ] ) ? 'ok' : 'error',
                 'details' => isset( $modes[ $mode ] ) ? 'Current mode: ' . $modes[ $mode ] : 'Unknown runtime mode.',
+            );
+        }
+
+        private static function check_runtime_resolution() {
+            if ( ! class_exists( 'MC_Delivery_V2_Runtime' ) ) {
+                return array(
+                    'label'   => 'Runtime resolution',
+                    'status'  => 'error',
+                    'details' => 'Runtime service is not available.',
+                );
+            }
+
+            $details = MC_Delivery_V2_Runtime::get_runtime_resolution_details();
+
+            $parts = array(
+                'Enabled now: ' . ( ! empty( $details['enabled_for_request'] ) ? 'yes' : 'no' ),
+                'Bucket: ' . ( isset( $details['bucket'] ) ? intval( $details['bucket'] ) : 0 ),
+                'User ID: ' . ( isset( $details['current_user_id'] ) ? intval( $details['current_user_id'] ) : 0 ),
+            );
+
+            $status = 'ok';
+            if ( empty( $details['enabled_for_request'] ) && $details['mode'] !== MC_Delivery_V2_Options::RUNTIME_MODE_LEGACY ) {
+                $status = 'warning';
+            }
+
+            return array(
+                'label'   => 'Runtime resolution',
+                'status'  => $status,
+                'details' => implode( '; ', $parts ),
             );
         }
 
@@ -143,4 +173,3 @@ if ( ! class_exists( 'MC_Delivery_V2_Diagnostics' ) ) {
         }
     }
 }
-

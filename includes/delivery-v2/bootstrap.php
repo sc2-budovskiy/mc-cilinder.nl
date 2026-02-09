@@ -11,6 +11,7 @@ require_once __DIR__ . '/class-mc-delivery-v2-scenario-resolver.php';
 require_once __DIR__ . '/class-mc-delivery-v2-matrix-service.php';
 require_once __DIR__ . '/class-mc-delivery-v2-diagnostics.php';
 require_once __DIR__ . '/class-mc-delivery-v2-admin.php';
+require_once __DIR__ . '/class-mc-delivery-v2-runtime.php';
 
 if ( ! class_exists( 'MC_Delivery_V2_Bootstrap' ) ) {
     class MC_Delivery_V2_Bootstrap {
@@ -26,9 +27,9 @@ if ( ! class_exists( 'MC_Delivery_V2_Bootstrap' ) ) {
             add_action( 'admin_init', array( 'MC_Delivery_V2_Options', 'register_settings' ) );
             add_action( 'admin_init', array( 'MC_Delivery_V2_Options', 'ensure_defaults' ) );
             add_action( 'admin_menu', array( 'MC_Delivery_V2_Admin', 'register_menu' ) );
+            MC_Delivery_V2_Runtime::register_hooks();
         }
     }
 }
 
 MC_Delivery_V2_Bootstrap::init();
-
