@@ -63,6 +63,7 @@ if ( ! class_exists( 'MC_Delivery_V2_Options' ) ) {
             self::maybe_add_option( self::OPTION_MAPPING, self::get_default_mapping_option() );
             self::maybe_add_option( self::OPTION_CUTOFF_RULES, self::get_default_cutoff_rules_option() );
             self::maybe_add_option( self::OPTION_MATRIX, self::get_default_matrix_option() );
+            self::sync_matrix_resolved_rate_ids_from_mapping();
         }
 
         public static function get_runtime_mode_labels() {
@@ -266,7 +267,7 @@ if ( ! class_exists( 'MC_Delivery_V2_Options' ) ) {
                 return $defaults;
             }
 
-            $rows = self::normalize_matrix_rows( $value['rows'] );
+            $rows = self::normalize_matrix_rows( $value['rows'], self::get_mapping_option() );
 
             if ( empty( $rows ) ) {
                 $rows = $defaults['rows'];
@@ -279,6 +280,44 @@ if ( ! class_exists( 'MC_Delivery_V2_Options' ) ) {
                 'rows'       => $rows,
                 'updated_at' => current_time( 'mysql' ),
             );
+        }
+
+        public static function sync_matrix_resolved_rate_ids_from_mapping( $old_mapping = null, $new_mapping = null ) {
+            if ( is_array( $new_mapping ) ) {
+                $mapping = wp_parse_args( $new_mapping, self::get_default_mapping_option() );
+            } else {
+                $mapping = self::get_mapping_option();
+            }
+
+            $matrix = self::get_matrix_option();
+            if ( empty( $matrix['rows'] ) || ! is_array( $matrix['rows'] ) ) {
+                return;
+            }
+
+            $rows    = self::normalize_matrix_rows( $matrix['rows'], $mapping );
+            $changed = false;
+
+            foreach ( $rows as $row_index => $row ) {
+                if ( ! isset( $matrix['rows'][ $row_index ]['resolved_rate_id'] ) ) {
+                    $changed = true;
+                    break;
+                }
+
+                if ( $matrix['rows'][ $row_index ]['resolved_rate_id'] !== $row['resolved_rate_id'] ) {
+                    $changed = true;
+                    break;
+                }
+            }
+
+            if ( ! $changed ) {
+                return;
+            }
+
+            $matrix['version']    = 1;
+            $matrix['rows']       = $rows;
+            $matrix['updated_at'] = current_time( 'mysql' );
+
+            update_option( self::OPTION_MATRIX, $matrix, false );
         }
 
         public static function get_default_flags_option() {
@@ -394,9 +433,10 @@ if ( ! class_exists( 'MC_Delivery_V2_Options' ) ) {
             return $rows;
         }
 
-        private static function normalize_matrix_rows( $rows ) {
+        private static function normalize_matrix_rows( $rows, $mapping = null ) {
             $valid_scenarios = array_keys( self::get_scenario_labels() );
             $valid_methods   = array_keys( self::get_method_labels() );
+            $mapping         = is_array( $mapping ) ? $mapping : self::get_mapping_option();
             $row_map         = array();
 
             foreach ( $rows as $raw_row ) {
@@ -426,6 +466,8 @@ if ( ! class_exists( 'MC_Delivery_V2_Options' ) ) {
                 if ( empty( $row['allowed_countries'] ) || ! is_array( $row['allowed_countries'] ) ) {
                     $row['allowed_countries'] = array( 'NL' );
                 }
+
+                $row['resolved_rate_id'] = self::resolve_mapping_rate_id( $row['method_key'], $mapping );
 
                 $normalized[] = $row;
             }
@@ -486,6 +528,15 @@ if ( ! class_exists( 'MC_Delivery_V2_Options' ) ) {
             }
 
             return $countries;
+        }
+
+        private static function resolve_mapping_rate_id( $method_key, $mapping ) {
+            $method_key = sanitize_text_field( $method_key );
+            if ( $method_key === '' || ! isset( $mapping[ $method_key ] ) ) {
+                return '';
+            }
+
+            return sanitize_text_field( $mapping[ $method_key ] );
         }
 
         private static function enforce_one_default_per_scenario( $rows ) {

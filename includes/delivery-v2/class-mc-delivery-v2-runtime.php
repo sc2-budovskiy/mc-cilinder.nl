@@ -9,6 +9,7 @@ if ( ! class_exists( 'MC_Delivery_V2_Runtime' ) ) {
         const GUEST_CANARY_COOKIE = 'mc_delivery_v2_canary_bucket';
 
         private static $cached_is_enabled = null;
+        private static $strict_gate_result = null;
 
         public static function register_hooks() {
             add_action( 'init', array( __CLASS__, 'maybe_seed_guest_canary_bucket' ), 1 );
@@ -48,6 +49,12 @@ if ( ! class_exists( 'MC_Delivery_V2_Runtime' ) ) {
             }
 
             $value = (bool) apply_filters( 'mc_delivery_v2_is_enabled_for_request', $value, $mode, $flags );
+
+            self::$strict_gate_result = self::evaluate_strict_gate( $mode, $value );
+            if ( ! self::$strict_gate_result['passed'] ) {
+                $value = false;
+            }
+
             self::$cached_is_enabled = $value;
 
             return $value;
@@ -60,6 +67,7 @@ if ( ! class_exists( 'MC_Delivery_V2_Runtime' ) ) {
         public static function get_runtime_resolution_details() {
             $flags = MC_Delivery_V2_Options::get_flags_option();
             $mode  = self::get_runtime_mode();
+            $strict_gate = self::get_strict_gate_result();
 
             return array(
                 'mode'                => $mode,
@@ -69,6 +77,9 @@ if ( ! class_exists( 'MC_Delivery_V2_Runtime' ) ) {
                 'canary_percentage'   => isset( $flags['canary_percentage'] ) ? absint( $flags['canary_percentage'] ) : 0,
                 'canary_user_ids'     => isset( $flags['canary_user_ids'] ) && is_array( $flags['canary_user_ids'] ) ? $flags['canary_user_ids'] : array(),
                 'bucket'              => self::get_request_bucket(),
+                'strict_gate_passed'  => ! empty( $strict_gate['passed'] ),
+                'strict_error_count'  => isset( $strict_gate['errors'] ) && is_array( $strict_gate['errors'] ) ? count( $strict_gate['errors'] ) : 0,
+                'strict_error_labels' => isset( $strict_gate['errors'] ) && is_array( $strict_gate['errors'] ) ? array_map( array( __CLASS__, 'extract_check_label' ), $strict_gate['errors'] ) : array(),
             );
         }
 
@@ -189,6 +200,76 @@ if ( ! class_exists( 'MC_Delivery_V2_Runtime' ) ) {
             }
 
             return defined( 'DOING_AJAX' ) && DOING_AJAX;
+        }
+
+        private static function evaluate_strict_gate( $mode, $current_value ) {
+            if ( ! $current_value || $mode === MC_Delivery_V2_Options::RUNTIME_MODE_LEGACY ) {
+                return array(
+                    'passed' => true,
+                    'errors' => array(),
+                );
+            }
+
+            if ( ! class_exists( 'MC_Delivery_V2_Diagnostics' ) ) {
+                return array(
+                    'passed' => false,
+                    'errors' => array(
+                        array(
+                            'label'   => 'Diagnostics availability',
+                            'status'  => 'error',
+                            'details' => 'Diagnostics service is not available.',
+                        ),
+                    ),
+                );
+            }
+
+            $blocking_errors = MC_Delivery_V2_Diagnostics::get_blocking_errors();
+
+            return array(
+                'passed' => empty( $blocking_errors ),
+                'errors' => $blocking_errors,
+            );
+        }
+
+        private static function get_strict_gate_result() {
+            if ( self::$strict_gate_result !== null ) {
+                return self::$strict_gate_result;
+            }
+
+            $mode  = self::get_runtime_mode();
+            $flags = MC_Delivery_V2_Options::get_flags_option();
+            $value = false;
+
+            switch ( $mode ) {
+                case MC_Delivery_V2_Options::RUNTIME_MODE_FULL:
+                    $value = true;
+                    break;
+
+                case MC_Delivery_V2_Options::RUNTIME_MODE_ADMIN_ONLY:
+                    $value = self::is_admin_preview_user();
+                    break;
+
+                case MC_Delivery_V2_Options::RUNTIME_MODE_CANARY:
+                    $value = self::is_canary_match( $flags );
+                    break;
+
+                case MC_Delivery_V2_Options::RUNTIME_MODE_LEGACY:
+                default:
+                    $value = false;
+                    break;
+            }
+
+            self::$strict_gate_result = self::evaluate_strict_gate( $mode, $value );
+
+            return self::$strict_gate_result;
+        }
+
+        private static function extract_check_label( $check ) {
+            if ( ! is_array( $check ) || empty( $check['label'] ) ) {
+                return '';
+            }
+
+            return sanitize_text_field( $check['label'] );
         }
     }
 }

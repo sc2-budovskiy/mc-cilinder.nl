@@ -27,6 +27,12 @@ if ( ! class_exists( 'MC_Delivery_V2_Bootstrap' ) ) {
 
             add_action( 'admin_init', array( 'MC_Delivery_V2_Options', 'register_settings' ) );
             add_action( 'admin_init', array( 'MC_Delivery_V2_Options', 'ensure_defaults' ) );
+            add_action(
+                'update_option_' . MC_Delivery_V2_Options::OPTION_MAPPING,
+                array( 'MC_Delivery_V2_Options', 'sync_matrix_resolved_rate_ids_from_mapping' ),
+                10,
+                2
+            );
             add_action( 'admin_menu', array( 'MC_Delivery_V2_Admin', 'register_menu' ) );
             MC_Delivery_V2_Runtime::register_hooks();
             MC_Delivery_V2_Checkout_Handler::register_hooks();

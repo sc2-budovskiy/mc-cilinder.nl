@@ -16,9 +16,24 @@ if ( ! class_exists( 'MC_Delivery_V2_Diagnostics' ) ) {
             $checks[] = self::check_scenario_defaults();
             $checks[] = self::check_mapping_coverage();
             $checks[] = self::check_mapping_rate_existence();
+            $checks[] = self::check_mapping_rate_uniqueness();
+            $checks[] = self::check_mapping_method_type_compatibility();
+            $checks[] = self::check_mapping_rate_enabled();
+            $checks[] = self::check_mapping_primary_nl_zone();
             $checks[] = self::check_nl_zone_count();
 
             return $checks;
+        }
+
+        public static function get_blocking_errors() {
+            $errors = array();
+            foreach ( self::collect_strict_runtime_checks() as $check ) {
+                if ( isset( $check['status'] ) && $check['status'] === 'error' ) {
+                    $errors[] = $check;
+                }
+            }
+
+            return $errors;
         }
 
         private static function check_woocommerce() {
@@ -62,7 +77,16 @@ if ( ! class_exists( 'MC_Delivery_V2_Diagnostics' ) ) {
             );
 
             $status = 'ok';
-            if ( empty( $details['enabled_for_request'] ) && $details['mode'] !== MC_Delivery_V2_Options::RUNTIME_MODE_LEGACY ) {
+            $strict_error_count = isset( $details['strict_error_count'] ) ? absint( $details['strict_error_count'] ) : 0;
+            if ( $strict_error_count > 0 ) {
+                $status  = 'error';
+                $parts[] = 'Strict gate blocked by ' . $strict_error_count . ' error(s)';
+                if ( ! empty( $details['strict_error_labels'] ) && is_array( $details['strict_error_labels'] ) ) {
+                    $parts[] = 'Strict checks: ' . implode( ', ', array_filter( $details['strict_error_labels'] ) );
+                }
+            }
+
+            if ( $status !== 'error' && empty( $details['enabled_for_request'] ) && $details['mode'] !== MC_Delivery_V2_Options::RUNTIME_MODE_LEGACY ) {
                 $status = 'warning';
             }
 
@@ -159,7 +183,7 @@ if ( ! class_exists( 'MC_Delivery_V2_Diagnostics' ) ) {
             if ( ! empty( $missing ) ) {
                 return array(
                     'label'   => 'Required mapping coverage',
-                    'status'  => 'warning',
+                    'status'  => 'error',
                     'details' => 'Missing mapping for: ' . implode( ', ', $missing ),
                 );
             }
@@ -168,6 +192,174 @@ if ( ! class_exists( 'MC_Delivery_V2_Diagnostics' ) ) {
                 'label'   => 'Required mapping coverage',
                 'status'  => 'ok',
                 'details' => 'All required methods mapped.',
+            );
+        }
+
+        private static function check_mapping_rate_enabled() {
+            $mapping   = MC_Delivery_V2_Options::get_mapping_option();
+            $invalid   = array();
+            $rate_cache = MC_Delivery_V2_Mapping_Repo::get_available_rates();
+
+            foreach ( array_keys( MC_Delivery_V2_Options::get_method_labels() ) as $method_key ) {
+                if ( empty( $mapping[ $method_key ] ) ) {
+                    continue;
+                }
+
+                $rate_id = sanitize_text_field( $mapping[ $method_key ] );
+                if ( ! isset( $rate_cache[ $rate_id ] ) ) {
+                    continue;
+                }
+
+                if ( empty( $rate_cache[ $rate_id ]['is_enabled'] ) ) {
+                    $invalid[] = $method_key . ' -> ' . $rate_id;
+                }
+            }
+
+            if ( ! empty( $invalid ) ) {
+                return array(
+                    'label'   => 'Mapped rate enabled state',
+                    'status'  => 'error',
+                    'details' => 'Mapped rate is disabled: ' . implode( '; ', $invalid ),
+                );
+            }
+
+            return array(
+                'label'   => 'Mapped rate enabled state',
+                'status'  => 'ok',
+                'details' => 'All mapped rates are enabled.',
+            );
+        }
+
+        private static function check_mapping_rate_uniqueness() {
+            $mapping    = MC_Delivery_V2_Options::get_mapping_option();
+            $rate_usage = array();
+            $duplicates = array();
+
+            foreach ( array_keys( MC_Delivery_V2_Options::get_method_labels() ) as $method_key ) {
+                if ( empty( $mapping[ $method_key ] ) ) {
+                    continue;
+                }
+
+                $rate_id = sanitize_text_field( $mapping[ $method_key ] );
+                if ( $rate_id === '' ) {
+                    continue;
+                }
+
+                if ( ! isset( $rate_usage[ $rate_id ] ) ) {
+                    $rate_usage[ $rate_id ] = array();
+                }
+
+                $rate_usage[ $rate_id ][] = $method_key;
+            }
+
+            foreach ( $rate_usage as $rate_id => $method_keys ) {
+                if ( count( $method_keys ) <= 1 ) {
+                    continue;
+                }
+
+                $duplicates[] = $rate_id . ' <- ' . implode( ', ', $method_keys );
+            }
+
+            if ( ! empty( $duplicates ) ) {
+                return array(
+                    'label'   => 'Mapped rate uniqueness',
+                    'status'  => 'error',
+                    'details' => 'One Woo rate is mapped to multiple method keys: ' . implode( '; ', $duplicates ),
+                );
+            }
+
+            return array(
+                'label'   => 'Mapped rate uniqueness',
+                'status'  => 'ok',
+                'details' => 'Each method key maps to a unique Woo rate ID.',
+            );
+        }
+
+        private static function check_mapping_method_type_compatibility() {
+            $mapping       = MC_Delivery_V2_Options::get_mapping_option();
+            $compatibility = self::get_method_type_compatibility_map();
+            $invalid       = array();
+
+            foreach ( $compatibility as $method_key => $allowed_method_ids ) {
+                if ( empty( $mapping[ $method_key ] ) ) {
+                    continue;
+                }
+
+                $rate_id = sanitize_text_field( $mapping[ $method_key ] );
+                if ( $rate_id === '' ) {
+                    continue;
+                }
+
+                $rate = MC_Delivery_V2_Mapping_Repo::get_rate( $rate_id );
+                if ( empty( $rate ) || ! is_array( $rate ) || empty( $rate['method_id'] ) ) {
+                    continue;
+                }
+
+                $actual_method_id = sanitize_text_field( $rate['method_id'] );
+                if ( in_array( $actual_method_id, $allowed_method_ids, true ) ) {
+                    continue;
+                }
+
+                $invalid[] = $method_key . ' -> ' . $rate_id . ' (method_id: ' . $actual_method_id . ', expected: ' . implode( '|', $allowed_method_ids ) . ')';
+            }
+
+            if ( ! empty( $invalid ) ) {
+                return array(
+                    'label'   => 'Mapped method type compatibility',
+                    'status'  => 'error',
+                    'details' => 'Mapped rate method_id is not allowed: ' . implode( '; ', $invalid ),
+                );
+            }
+
+            return array(
+                'label'   => 'Mapped method type compatibility',
+                'status'  => 'ok',
+                'details' => 'All mapped method types are compatible with canonical method keys.',
+            );
+        }
+
+        private static function check_mapping_primary_nl_zone() {
+            $mapping          = MC_Delivery_V2_Options::get_mapping_option();
+            $primary_nl_zone  = MC_Delivery_V2_Mapping_Repo::get_primary_zone_id_by_country( 'NL' );
+            $primary_nl_label = MC_Delivery_V2_Mapping_Repo::get_zone_name_by_id( $primary_nl_zone );
+            $invalid          = array();
+
+            if ( $primary_nl_zone <= 0 ) {
+                return array(
+                    'label'   => 'Mapped rate NL zone alignment',
+                    'status'  => 'error',
+                    'details' => 'No primary NL shipping zone detected.',
+                );
+            }
+
+            foreach ( array_keys( MC_Delivery_V2_Options::get_method_labels() ) as $method_key ) {
+                if ( empty( $mapping[ $method_key ] ) ) {
+                    continue;
+                }
+
+                $rate_id = sanitize_text_field( $mapping[ $method_key ] );
+                $rate    = MC_Delivery_V2_Mapping_Repo::get_rate( $rate_id );
+                if ( empty( $rate ) || ! is_array( $rate ) ) {
+                    continue;
+                }
+
+                if ( absint( $rate['zone_id'] ) !== $primary_nl_zone ) {
+                    $invalid[] = $method_key . ' -> ' . $rate_id . ' (zone: ' . $rate['zone_name'] . ')';
+                }
+            }
+
+            if ( ! empty( $invalid ) ) {
+                return array(
+                    'label'   => 'Mapped rate NL zone alignment',
+                    'status'  => 'error',
+                    'details' => 'Expected primary NL zone #' . $primary_nl_zone . ( $primary_nl_label ? ' (' . $primary_nl_label . ')' : '' ) . '. Mismatches: ' . implode( '; ', $invalid ),
+                );
+            }
+
+            return array(
+                'label'   => 'Mapped rate NL zone alignment',
+                'status'  => 'ok',
+                'details' => 'All mapped rates belong to primary NL zone #' . $primary_nl_zone . ( $primary_nl_label ? ' (' . $primary_nl_label . ')' : '' ) . '.',
             );
         }
 
@@ -225,6 +417,53 @@ if ( ! class_exists( 'MC_Delivery_V2_Diagnostics' ) ) {
                 'status'  => 'ok',
                 'details' => 'Single NL zone detected: ' . implode( ', ', $zone_ids ),
             );
+        }
+
+        private static function collect_strict_runtime_checks() {
+            return array(
+                self::check_woocommerce(),
+                self::check_matrix_rows(),
+                self::check_scenario_defaults(),
+                self::check_mapping_coverage(),
+                self::check_mapping_rate_existence(),
+                self::check_mapping_rate_uniqueness(),
+                self::check_mapping_method_type_compatibility(),
+                self::check_mapping_rate_enabled(),
+                self::check_mapping_primary_nl_zone(),
+            );
+        }
+
+        private static function get_method_type_compatibility_map() {
+            $map = array(
+                'postnl_parcel'           => array( 'flat_rate' ),
+                'postnl_letterbox'        => array( 'flat_rate' ),
+                'postnl_collection_point' => array( 'innosend', 'service_point_shipping_method' ),
+                'trunkrs_evening_delivery'=> array( 'flat_rate', 'trunkrs', 'trunkrs_shipping', 'trunkrs_delivery' ),
+                'pickup_by_appointment'   => array( 'local_pickup' ),
+            );
+
+            $map = apply_filters( 'mc_delivery_v2_method_type_compatibility_map', $map );
+            if ( ! is_array( $map ) ) {
+                return array();
+            }
+
+            foreach ( $map as $method_key => $method_ids ) {
+                if ( ! is_array( $method_ids ) ) {
+                    $map[ $method_key ] = array();
+                    continue;
+                }
+
+                $map[ $method_key ] = array_values(
+                    array_filter(
+                        array_unique(
+                            array_map( 'sanitize_text_field', $method_ids )
+                        ),
+                        'strlen'
+                    )
+                );
+            }
+
+            return $map;
         }
     }
 }
