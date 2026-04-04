@@ -142,6 +142,7 @@ function calcFreeKeysCnt($cilinderCount, $isKeyplan = false, $noAddKeys = false)
                             foreach ( apply_filters('woocommerce_cart_get_cart', WC()->cart->get_cart()) as $cart_item_key => $cart_item ) {
                                 $_product     = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
                                 if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_checkout_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
+                                    $groupKey = mc_get_cart_item_group_key( $cart_item, $_product->get_id() );
                                     $categories = get_the_terms($_product->get_id(), 'product_cat');
                                     $productType = "";
                                     foreach($categories as $category) {
@@ -158,10 +159,10 @@ function calcFreeKeysCnt($cilinderCount, $isKeyplan = false, $noAddKeys = false)
                                     }
                                     if($productType == "cilinder") {
                                         //$cilinderTotalPrice += ( $cart_item['line_total'] + (!$excl_btw ? $cart_item['line_tax'] : 0) );
-                                        if(!isset($cilinderTotals[$_product->get_id()])) {
-                                            $cilinderTotals[$_product->get_id()] = 0;
+                                        if(!isset($cilinderTotals[$groupKey])) {
+                                            $cilinderTotals[$groupKey] = 0;
                                         }
-                                        $cilinderTotals[$_product->get_id()] += ( $cart_item['line_total'] + (!$excl_btw ? $cart_item['line_tax'] : 0) );
+                                        $cilinderTotals[$groupKey] += ( $cart_item['line_total'] + (!$excl_btw ? $cart_item['line_tax'] : 0) );
                                     }
                                     elseif($productType == "key")
                                     {
@@ -198,20 +199,24 @@ function calcFreeKeysCnt($cilinderCount, $isKeyplan = false, $noAddKeys = false)
                             $_product     = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
 
                             if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_checkout_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
+                            $groupKey = mc_get_cart_item_group_key( $cart_item, $_product->get_id() );
+                            $setLabel = mc_get_cart_item_set_label( $cart_item );
+                            $itemIsKeyplan = false;
+                            $itemNoAddKeys = false;
                             //is keyplan
                             if($_product->get_id() == 1577 || $_product->get_name() == "Sluitplan")
                             {
                                 $isKeyplan = true;
-                                $isKeyplanArray[$_product->get_id()] = true;
+                                $itemIsKeyplan = true;
                             }
                             if(strpos(strtolower($_product->get_name()),"sluitplan") !== false || strpos(strtolower($_product->get_name()),"keyplan") !== false) {
-                                $isKeyplanArray[$_product->get_id()] = true;
+                                $itemIsKeyplan = true;
                             }
                             //nabestellen
                             if(strpos(strtolower($_product->get_name()),"nabestellen") !== false || $_product->get_id() == 1284 || $_product->get_id() == 1265)
                             {
                                 $noAddKeys = true;
-                                $noAddKeysArray[$_product->get_id()] = true;
+                                $itemNoAddKeys = true;
                             }
                             //category
                             $categories = get_the_terms($_product->get_id(), 'product_cat');
@@ -234,8 +239,8 @@ function calcFreeKeysCnt($cilinderCount, $isKeyplan = false, $noAddKeys = false)
                                 }
                             }
                             if($productType == "cilinder") {
-                            if($productGroup != $_product->get_id() ) {
-                            $productGroup = $_product->get_id();
+                            if($productGroup != $groupKey ) {
+                            $productGroup = $groupKey;
                             $ind = 0;
                             if($cilinderCount != 0) {
                                 echo "</div></div>";
@@ -250,7 +255,7 @@ function calcFreeKeysCnt($cilinderCount, $isKeyplan = false, $noAddKeys = false)
                                     <h4 class="panel-title">
                                         <table class="ph-table">
                                             <tr>
-                                                <td><?php echo $_product->get_name(); ?><br/>
+                                                <td><?php echo $_product->get_name(); ?><?php if($setLabel) { ?><span class="mc-set-label mc-set-label-inline"><?php echo esc_html( $setLabel ); ?></span><?php } ?><br/>
                                                     <a class="show-options" data-toggle="collapse" href="#collapse<?=$cart_item_key?>" data-label="Verberg opties">Toon opties</a></td>
                                                 <td align="right"><?php echo wc_price( $cilinderTotals[$productGroup] ); ?></td>
                                             </tr>
@@ -261,10 +266,12 @@ function calcFreeKeysCnt($cilinderCount, $isKeyplan = false, $noAddKeys = false)
                                     <?php
                                     }
                                     $cilinderCount += $cart_item["quantity"];
-                                    if(!isset($cilinderCountArray[$productGroup])) {
-                                        $cilinderCountArray[$productGroup] = 0;
+                                    if(!isset($cilinderCountArray[$groupKey])) {
+                                        $cilinderCountArray[$groupKey] = 0;
+                                        $isKeyplanArray[$groupKey] = $itemIsKeyplan;
+                                        $noAddKeysArray[$groupKey] = $itemNoAddKeys;
                                     }
-                                    $cilinderCountArray[$productGroup] += $cart_item["quantity"];
+                                    $cilinderCountArray[$groupKey] += $cart_item["quantity"];
                                     for($i = 0; $i < $cart_item["quantity"]; $i++) {
                                         ?>
                                         <div class="checkout-products-data">
@@ -345,12 +352,13 @@ function calcFreeKeysCnt($cilinderCount, $isKeyplan = false, $noAddKeys = false)
                                                         echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                                             'woocommerce_cart_item_remove_link',
                                                             sprintf(
-                                                                '<a class="remove cilinder-remove" aria-label="%s" data-product_id="%s" data-product_sku="%s" data-cart-item-key="%s" data-qty-value="%s">&times;</a>',
+                                                                '<a class="remove cilinder-remove" aria-label="%s" data-product_id="%s" data-product_sku="%s" data-cart-item-key="%s" data-qty-value="%s" data-set-token="%s">&times;</a>',
                                                                 '&times;',
                                                                 esc_attr( $_product->get_id() ),
                                                                 esc_attr( $_product->get_sku() ),
                                                                 $cart_item_key,
-                                                                $cart_item['quantity']
+                                                                $cart_item['quantity'],
+                                                                esc_attr( mc_get_cart_item_set_token( $cart_item ) )
                                                             ),
                                                             $cart_item_key
                                                         );
@@ -459,6 +467,7 @@ function calcFreeKeysCnt($cilinderCount, $isKeyplan = false, $noAddKeys = false)
                                     $_product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
 
                                     if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_checkout_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
+                                        $setLabel = mc_get_cart_item_set_label( $cart_item );
                                         $image = wp_get_attachment_image_src( get_post_thumbnail_id( $_product->get_id() ), 'single-post-thumbnail' );
                                         ?>
                                         <div class="panel panel-default">
@@ -467,7 +476,7 @@ function calcFreeKeysCnt($cilinderCount, $isKeyplan = false, $noAddKeys = false)
                                                 <h4 class="panel-title">
                                                     <table class="ph-table">
                                                         <tr>
-                                                            <td><?php echo $_product->get_name(); ?><br/>
+                                                            <td><?php echo $_product->get_name(); ?><?php if($setLabel) { ?><span class="mc-set-label mc-set-label-inline"><?php echo esc_html( $setLabel ); ?></span><?php } ?><br/>
                                                                 <a class="show-options" data-toggle="collapse" href="#collapse<?=$cart_item_key?>" data-label="Verberg opties">Toon opties</a></td>
                                                             <td align="right"><?php echo wc_price( $cart_item['line_total'] + (!$excl_btw ? $cart_item['line_tax'] : 0) ); ?></td>
                                                         </tr>
@@ -484,6 +493,7 @@ function calcFreeKeysCnt($cilinderCount, $isKeyplan = false, $noAddKeys = false)
                                                                         <table class="ph-table">
                                                                             <tr>
                                                                                 <td>
+                                                                                    <?php if($setLabel) { ?><span class="mc-set-label mc-set-label-inline"><?php echo esc_html( $setLabel ); ?></span><br/><?php } ?>
                                                                                     <?php echo apply_filters( 'woocommerce_cart_item_name', $_product->get_title(), $cart_item, $cart_item_key ) . '&nbsp;'; ?>
                                                                                     <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times; %s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); ?>
 

@@ -35,7 +35,7 @@
 
     <link rel="stylesheet" href="<?php bloginfo('template_directory'); ?>/libs/slick/slick.css">
     <link rel="stylesheet" href="<?php bloginfo('template_directory'); ?>/libs/slick/slick-theme.css">
-    <link rel="stylesheet" href="<?php bloginfo('template_directory'); ?>/css/main.css?v=10">
+    <link rel="stylesheet" href="<?php bloginfo('template_directory'); ?>/css/main.css?v=11">
 
     <!--<script src="<?php bloginfo('template_directory'); ?>/js/vendor/modernizr-2.8.3-respond-1.4.2.min.js"></script>-->
     <?php wp_head(); ?>

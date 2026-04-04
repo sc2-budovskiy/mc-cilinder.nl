@@ -47,6 +47,7 @@ do_action( 'woocommerce_before_cart' ); ?>
 			$_product     = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
 
 			if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_checkout_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
+                $setLabel = mc_get_cart_item_set_label( $cart_item );
 				//is keyplan
 				if($_product->get_id() == 1577 || $_product->get_name() == "Sluitplan")
 				{
@@ -145,8 +146,9 @@ do_action( 'woocommerce_before_cart' ); ?>
 									$pVar = get_product_addons($_product->get_id());
 									$userImage = $pVar[4];
 								}
-								?>
+	                        ?>
                                 <div class="cilinder-count-item active block-align-center">
+                                    <?php if($setLabel) { ?><div class="mc-set-label"><?php echo esc_html( $setLabel ); ?></div><?php } ?>
                                     <div class="cilinder-count-title"><?php if($doorName) { ?><div class="cilinder-name" data-field="addon-<?=$_product->get_id() . substr($pDoorname["field-name"], strpos($pDoorname["field-name"],"-"))?>[]"><?php echo $doorName;?></div><?php } else { echo "Cilinder"; } ?></div>
 									<?php
 									//$image = wp_get_attachment_image_src( get_post_thumbnail_id( $_product->get_id() ), 'single-post-thumbnail' );
@@ -262,7 +264,7 @@ do_action( 'woocommerce_before_cart' ); ?>
                                 </div>
                             </div>
                             <a class="cilinder-edit show-cilinder-params">Cilinder aanpassen</a>
-                            <a class="cilinder-edit submit-cilinder-params" data-product-id="<?php echo $_product->get_id(); ?>" data-cart-item-key="<?=$cart_item_key?>" data-qty-value="<?=$cart_item['quantity']?>">Change</a>
+                            <a class="cilinder-edit submit-cilinder-params" data-product-id="<?php echo $_product->get_id(); ?>" data-cart-item-key="<?=$cart_item_key?>" data-qty-value="<?=$cart_item['quantity']?>" data-set-token="<?php echo esc_attr( mc_get_cart_item_set_token( $cart_item ) ); ?>">Change</a>
                         </div>
 						<?php
 						$cnt++;
@@ -304,6 +306,7 @@ do_action( 'woocommerce_before_cart' ); ?>
 					$_product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
 
 					if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_checkout_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
+                        $setLabel = mc_get_cart_item_set_label( $cart_item );
 						$image = wp_get_attachment_image_src( get_post_thumbnail_id( $_product->get_id() ), 'single-post-thumbnail' );
 						?>
                         <div class="checkout-products-data extra-products-data">
@@ -319,6 +322,7 @@ do_action( 'woocommerce_before_cart' ); ?>
                                 <div class="cilinder-params clearfix">
                                     <div class="param-item">
                                         <div class="param-value">
+											<?php if($setLabel) { ?><div class="mc-set-label"><?php echo esc_html( $setLabel ); ?></div><?php } ?>
 											<?php echo apply_filters( 'woocommerce_cart_item_name', $_product->get_title(), $cart_item, $cart_item_key ) . '&nbsp;'; ?>
 											<?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times; %s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); ?>
                                         </div>

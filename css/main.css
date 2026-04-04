@@ -4950,3 +4950,29 @@ table.ph-table .pht-label {
         margin-right:0 !important;
     }
 }
+.mc-set-label {
+    display:inline-block;
+    margin-bottom:10px;
+    padding:4px 10px;
+    border:1px solid #ff642d;
+    border-radius:999px;
+    background:rgba(255, 100, 45, 0.08);
+    color:#ff642d;
+    font-size:12px;
+    font-weight:bold;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+}
+.mc-set-label-inline {
+    margin-bottom:0;
+    margin-left:10px;
+    vertical-align:middle;
+}
+.cilinder-count-title .mc-set-label {
+    display:table;
+    margin:0 auto 8px;
+}
+.ph-table .mc-set-label,
+.param-value .mc-set-label-inline {
+    margin-bottom:0;
+}

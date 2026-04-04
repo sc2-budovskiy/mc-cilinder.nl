@@ -87,20 +87,24 @@ do_action( 'woocommerce_before_cart' ); ?>
             $_product     = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
 
             if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_checkout_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
+                $groupKey      = mc_get_cart_item_group_key( $cart_item, $_product->get_id() );
+                $setLabel      = mc_get_cart_item_set_label( $cart_item );
+                $itemIsKeyplan = false;
+                $itemNoAddKeys = false;
                 //is keyplan
                 if($_product->get_id() == 1577 || $_product->get_name() == "Sluitplan")
                 {
                     $isKeyplan = true;
-                    $isKeyplanArray[$_product->get_id()] = true;
+                    $itemIsKeyplan = true;
                 }
                 if(strpos(strtolower($_product->get_name()),"sluitplan") !== false || strpos(strtolower($_product->get_name()),"keyplan") !== false) {
-                    $isKeyplanArray[$_product->get_id()] = true;
+                    $itemIsKeyplan = true;
                 }
                 //nabestellen
                 if(strpos(strtolower($_product->get_name()),"nabestellen") !== false || $_product->get_id() == 1284 || $_product->get_id() == 1265)
                 {
                     $noAddKeys = true;
-                    $noAddKeysArray[$_product->get_id()] = true;
+                    $itemNoAddKeys = true;
                 }
                 //category
                 $categories = get_the_terms($_product->get_id(), 'product_cat');
@@ -109,10 +113,12 @@ do_action( 'woocommerce_before_cart' ); ?>
                     if($category->term_id == 32 || $category->name == "Deurcilinders")
                     {
                         $productName = apply_filters( 'woocommerce_cart_item_name', $_product->get_name(), $cart_item, $cart_item_key );
-                        if(/*$cilinderCount == 0*/$productGroup != $_product->get_id() && $productName)
+                        if(/*$cilinderCount == 0*/$productGroup != $groupKey && $productName)
                         {
-                            echo "<h2>" . $productName . "</h2>";
-                            $productGroup = $_product->get_id();
+                            ?>
+                            <h2><?php echo $productName; ?><?php if($setLabel) { ?><span class="mc-set-label mc-set-label-inline"><?php echo esc_html( $setLabel ); ?></span><?php } ?></h2>
+                            <?php
+                            $productGroup = $groupKey;
                         }
                         $productType = "cilinder";
                         break;
@@ -130,10 +136,12 @@ do_action( 'woocommerce_before_cart' ); ?>
                 }
                 if($productType == "cilinder") {
                     $cilinderCount += $cart_item["quantity"];
-                    if(!isset($cilinderCountArray[$productGroup])) {
-                        $cilinderCountArray[$productGroup] = 0;
+                    if(!isset($cilinderCountArray[$groupKey])) {
+                        $cilinderCountArray[$groupKey] = 0;
+                        $isKeyplanArray[$groupKey] = $itemIsKeyplan;
+                        $noAddKeysArray[$groupKey] = $itemNoAddKeys;
                     }
-                    $cilinderCountArray[$productGroup] += $cart_item["quantity"];
+                    $cilinderCountArray[$groupKey] += $cart_item["quantity"];
                     for($i = 0; $i < $cart_item["quantity"]; $i++) {
                         ?>
                         <div class="checkout-products-data">
@@ -231,6 +239,7 @@ do_action( 'woocommerce_before_cart' ); ?>
                                 ?>
                                 <div class="col-md-8ths">
                                     <div class="cilinder-count-item active block-align-center">
+                                        <?php if($setLabel) { ?><div class="mc-set-label"><?php echo esc_html( $setLabel ); ?></div><?php } ?>
                                         <div class="cilinder-count-title"><?php if($doorName) { ?><div class="cilinder-name" data-field="addon-<?=$_product->get_id() . substr($pDoorname["field-name"], strpos($pDoorname["field-name"],"-"))?>[]"><?php echo $doorName;?></div><?php } else { echo "Cilinder"; } ?></div>
                                         <?php
                                         //$image = wp_get_attachment_image_src( get_post_thumbnail_id( $_product->get_id() ), 'single-post-thumbnail' );
@@ -418,7 +427,7 @@ do_action( 'woocommerce_before_cart' ); ?>
                                 </div>
                             </div>
                             <a class="cilinder-edit show-cilinder-params">Cilinder aanpassen</a>
-                            <a class="cilinder-edit submit-cilinder-params" data-product-id="<?php echo $_product->get_id(); ?>" data-cart-item-key="<?=$cart_item_key?>" data-qty-value="<?=$cart_item['quantity']?>">Change</a>
+                            <a class="cilinder-edit submit-cilinder-params" data-product-id="<?php echo $_product->get_id(); ?>" data-cart-item-key="<?=$cart_item_key?>" data-qty-value="<?=$cart_item['quantity']?>" data-set-token="<?php echo esc_attr( mc_get_cart_item_set_token( $cart_item ) ); ?>">Change</a>
                             <div class="product-remove">
                                 <?php
                                 echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -521,6 +530,7 @@ do_action( 'woocommerce_before_cart' ); ?>
                     $_product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
 
                     if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_checkout_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
+                        $setLabel = mc_get_cart_item_set_label( $cart_item );
                         $image = wp_get_attachment_image_src( get_post_thumbnail_id( $_product->get_id() ), 'single-post-thumbnail' );
                         ?>
                         <div class="checkout-products-data extra-products-data">
@@ -540,6 +550,7 @@ do_action( 'woocommerce_before_cart' ); ?>
                                         <div class="col-md-3 col-xs-6">
                                             <div class="param-item">
                                                 <div class="param-value">
+                                                    <?php if($setLabel) { ?><div class="mc-set-label"><?php echo esc_html( $setLabel ); ?></div><?php } ?>
                                                     <?php echo apply_filters( 'woocommerce_cart_item_name', $_product->get_title(), $cart_item, $cart_item_key ) . '&nbsp;'; ?>
                                                     <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times; %s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); ?>
                                                 </div>
@@ -805,11 +816,13 @@ do_action( 'woocommerce_before_cart' ); ?>
                         //category
                         $categories = get_the_terms($_product->get_id(), 'product_cat');
                         if(empty($categories)) {
+                            $setLabel = mc_get_cart_item_set_label( $cart_item );
                             ?>
                             <div class="row <?php echo esc_attr( apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) ); ?>">
                                 <label class="col-sm-9 col-xs-6 control-label">
                                     <?php echo apply_filters( 'woocommerce_cart_item_name', $_product->get_title(), $cart_item, $cart_item_key ) . "&nbsp;"; ?>
                                     <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times; %s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); ?>
+                                    <?php if($setLabel) { ?><div class="mc-set-label"><?php echo esc_html( $setLabel ); ?></div><?php } ?>
                                     <?php if(!empty($cart_item["addons"])) { ?>
                                         <div class="row">
                                             <div class="col-md-12">

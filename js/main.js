@@ -253,6 +253,17 @@ function send_params(params, qNum, pNum)
         location.href = "/cart/";
     });
 }
+function generate_mc_set_token()
+{
+    return "mc-set-" + Date.now().toString(36) + "-" + Math.random().toString(36).substr(2, 6);
+}
+function append_mc_set_token(formData, index, setToken)
+{
+    if(setToken)
+    {
+        formData.append("items[" + index + "][mc_set_token]", setToken);
+    }
+}
 function change_image(rowNum) {
     var imgType;
     var row = jQuery(".cilinder-config-options:eq('" + rowNum + "')");
@@ -618,11 +629,17 @@ jQuery(document).ready(function() {
         var keyType = obj.closest(".offer-item").find(".key-type");
         var startIndex = 0;
         var fd = new FormData();
+        var setToken = "";
+        if(options.length !== 0 || keyplanCalculation.length != 0)
+        {
+            setToken = generate_mc_set_token();
+        }
         if(keyplanCalculation.length != 0)
         {
             //var kp = new FormData();
             fd.append("items[0][add-to-cart]", keyplanCalculation.data("id"));
             fd.append("items[0][quantity]", 1);
+            append_mc_set_token(fd, 0, setToken);
             //params[0] = kp;
             pNum++;
             startIndex++;
@@ -632,6 +649,7 @@ jQuery(document).ready(function() {
             //var sp = new FormData();
             fd.append("items[" + startIndex + "][add-to-cart]", addServicepen.data("id"));
             fd.append("items[" + startIndex + "][quantity]", 1);
+            append_mc_set_token(fd, startIndex, setToken);
             //params[startIndex] = sp;
             pNum++;
             startIndex++;
@@ -640,6 +658,7 @@ jQuery(document).ready(function() {
             //var fd = new FormData();
             fd.append("items[" + (index - ( -startIndex)) + "][quantity]", form.find("input[name='quantity']").val());
             fd.append("items[" + (index - ( -startIndex)) + "][add-to-cart]", form.find("input[name='add-to-cart']").val());
+            append_mc_set_token(fd, (index - ( -startIndex)), setToken);
             jQuery(this).find(".param-value").each(function () {
                 fd.append("items[" + (index - ( -startIndex)) + "][" + form.find("." + jQuery(this).attr("data-field")).attr("name").replace("[]", "") + "]", jQuery(this).attr("data-value"));
             });
@@ -669,6 +688,7 @@ jQuery(document).ready(function() {
                 //var keyData = new FormData();
                 fd.append("items[" + pNum + "][quantity]", keysNum);
                 fd.append("items[" + pNum + "][add-to-cart]", keyId);
+                append_mc_set_token(fd, pNum, setToken);
                 //params[pNum] = keyData;
                 pNum++;
             }
@@ -691,6 +711,7 @@ jQuery(document).ready(function() {
                     var extraKeyQuantity = parseInt(accessKeysNum.text());
                     ind += extraKeyQuantity;
                     fd.append("items[" + pNum + "][add-to-cart]", keyId);
+                    append_mc_set_token(fd, pNum, setToken);
                     fd.append("items[" + pNum + "][" + accessParamsBlock.data("name-user").replace("[]", "") + "][]", jQuery(this).find(".sleutel-name").text());
                     var accessParams = "";
                     jQuery(this).find(".access-block.active").each(function(index){
@@ -726,6 +747,7 @@ jQuery(document).ready(function() {
                         fd.set("items[" + (pNum - 1) + "][quantity]", extraKeyQuantity);
                         //var temp = new FormData();
                         fd.append("items[" + pNum + "][add-to-cart]", keyId);
+                        append_mc_set_token(fd, pNum, setToken);
                         fd.append("items[" + pNum + "][" + accessParamsBlock.data("name-user").replace("[]", "") + "][]", jQuery(this).find(".sleutel-name").text());
                         fd.append("items[" + pNum + "][" + accessParamsBlock.data("name-access").replace("[]", "") + "][]", accessParams);
                         fd.append("items[" + pNum + "][" + accessParamsBlock.data("name-price").replace("[]", "") + "]", jQuery(".key-price").data("value"));
@@ -742,6 +764,7 @@ jQuery(document).ready(function() {
                 //var masterkeyData = new FormData();
                 fd.append("items[" + pNum + "][quantity]", masterkeyNum);
                 fd.append("items[" + pNum + "][add-to-cart]", masterkeyId);
+                append_mc_set_token(fd, pNum, setToken);
                 fd.append("items[" + pNum + "][" + accessParamsBlock.data("name-user").replace("[]", "") + "][]", "Masterkey");
                 fd.append("items[" + pNum + "][" + accessParamsBlock.data("name-access").replace("[]", "") + "][]", "*masterkey");
                 fd.append("items[" + pNum + "][" + accessParamsBlock.data("name-price").replace("[]", "") + "]", jQuery(".key-price").data("value"));
@@ -1139,10 +1162,12 @@ jQuery(document).ready(function() {
             var userImage = pd.find('.user-image');
             var keyType = pd.find(".key-type");
             var startIndex = 0;
+            var setToken = obj.data("set-token");
             options.each(function (index) {
                 var fd = new FormData();
                 fd.append("items[0][quantity]", 1);
                 fd.append("items[0][add-to-cart]", obj.data("product-id"));
+                append_mc_set_token(fd, 0, setToken);
                 jQuery(this).find(".param-value").each(function () {
                     if(jQuery(this).attr("data-field") && jQuery(this).attr("data-value")) {
                         fd.append("items[0][" + jQuery(this).attr("data-field").replace("[]", "") + "]", jQuery(this).attr("data-value"));

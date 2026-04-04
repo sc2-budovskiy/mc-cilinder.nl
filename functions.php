@@ -1655,6 +1655,120 @@ function customer_on_hold_order_for_specified_payment( $recipient, $order ) {
     return $recipient;
 }
 
+function mc_sanitize_set_token( $token ) {
+    if ( ! is_scalar( $token ) ) {
+        return '';
+    }
+
+    return trim( sanitize_text_field( wp_unslash( (string) $token ) ) );
+}
+
+function mc_get_cart_item_set_token( $cart_item ) {
+    if ( empty( $cart_item['mc_set_token'] ) ) {
+        return '';
+    }
+
+    return mc_sanitize_set_token( $cart_item['mc_set_token'] );
+}
+
+function mc_get_cart_set_labels( $cart = null ) {
+    if ( null === $cart ) {
+        $cart = WC()->cart;
+    }
+
+    if ( ! $cart || ! is_object( $cart ) || ! method_exists( $cart, 'get_cart' ) ) {
+        return array();
+    }
+
+    $set_labels = array();
+    $set_index  = 1;
+
+    foreach ( $cart->get_cart() as $cart_item ) {
+        $set_token = mc_get_cart_item_set_token( $cart_item );
+
+        if ( ! $set_token || isset( $set_labels[ $set_token ] ) ) {
+            continue;
+        }
+
+        $set_labels[ $set_token ] = 'Set ' . $set_index;
+        $set_index ++;
+    }
+
+    return $set_labels;
+}
+
+function mc_get_cart_item_set_label( $cart_item, $cart = null ) {
+    $set_token = mc_get_cart_item_set_token( $cart_item );
+
+    if ( ! $set_token ) {
+        return '';
+    }
+
+    $set_labels = mc_get_cart_set_labels( $cart );
+
+    return isset( $set_labels[ $set_token ] ) ? $set_labels[ $set_token ] : '';
+}
+
+function mc_get_cart_item_group_key( $cart_item, $default_key ) {
+    $set_token = mc_get_cart_item_set_token( $cart_item );
+
+    if ( ! $set_token ) {
+        return (string) $default_key;
+    }
+
+    return $default_key . '|' . $set_token;
+}
+
+function mc_get_order_item_set_label( $item ) {
+    if ( ! $item || ! is_callable( array( $item, 'get_meta' ) ) ) {
+        return '';
+    }
+
+    return trim( (string) $item->get_meta( 'Set', true ) );
+}
+
+add_filter( 'woocommerce_get_item_data', 'mc_add_set_label_to_item_data', 10, 2 );
+function mc_add_set_label_to_item_data( $item_data, $cart_item ) {
+    $set_label = mc_get_cart_item_set_label( $cart_item );
+
+    if ( ! $set_label ) {
+        return $item_data;
+    }
+
+    array_unshift(
+        $item_data,
+        array(
+            'key'   => 'Set',
+            'value' => $set_label,
+        )
+    );
+
+    return $item_data;
+}
+
+add_action( 'woocommerce_checkout_create_order_line_item', 'mc_add_set_label_to_order_item', 10, 4 );
+function mc_add_set_label_to_order_item( $item, $cart_item_key, $values, $order ) {
+    $set_label = mc_get_cart_item_set_label( $values );
+
+    if ( ! $set_label ) {
+        return;
+    }
+
+    $item->add_meta_data( 'Set', $set_label, true );
+
+    $set_token = mc_get_cart_item_set_token( $values );
+    if ( $set_token ) {
+        $item->add_meta_data( '_mc_set_token', $set_token, true );
+    }
+}
+
+add_filter( 'woocommerce_hidden_order_itemmeta', 'mc_hide_internal_set_meta' );
+function mc_hide_internal_set_meta( $hidden_meta ) {
+    $hidden_meta[] = '_mc_set_token';
+
+    return $hidden_meta;
+}
+
 add_action( 'template_redirect', 'simple_cart_handler' );
 function simple_cart_handler() {
     if( isset( $_GET['simple_cart'] ) && $_SERVER['REQUEST_METHOD'] == "POST" ) {
@@ -1664,24 +1778,32 @@ function simple_cart_handler() {
             foreach($_REQUEST["items"] as $ind => $item) {
                 $cart_item_data_array = $item;
                 $cart_item_data = $Product_Addon_Cart->add_cart_item_data(array(), $item["add-to-cart"], $cart_item_data_array);
-                foreach ($cart_item_data["addons"] as $key => $cart_item_data_item) {
-                    if ($cart_item_data_item["name"] == "Maat") {
-                        $cart_item_data["addons"][$key]["name"] = "Cilindermaat";//"Buitenzijde/Binnenzijde";
-                    }
-                    if ($cart_item_data_item["name"] == "Extra knop lange kant") {
-                        $cart_item_data["addons"][$key]["name"] = "Binnenzijde";
-                    }
-                    if ($cart_item_data_item["value"] == "Knop lange zijde") {
-                        $cart_item_data["addons"][$key]["value"] = "Knop";
-                    }
-                    if ($cart_item_data_item["value"] == "Pushknop lange zijde") {
-                        $cart_item_data["addons"][$key]["value"] = "Pushknop";
-                    }
-                    if ($cart_item_data_item["name"] == "Extra knop korte kant") {
-                        //$cart_item_data["addons"][$key]["name"] = "Buitenzijde";
-                        unset($cart_item_data["addons"][$key]);
+                if ( ! empty( $cart_item_data["addons"] ) ) {
+                    foreach ($cart_item_data["addons"] as $key => $cart_item_data_item) {
+                        if ($cart_item_data_item["name"] == "Maat") {
+                            $cart_item_data["addons"][$key]["name"] = "Cilindermaat";//"Buitenzijde/Binnenzijde";
+                        }
+                        if ($cart_item_data_item["name"] == "Extra knop lange kant") {
+                            $cart_item_data["addons"][$key]["name"] = "Binnenzijde";
+                        }
+                        if ($cart_item_data_item["value"] == "Knop lange zijde") {
+                            $cart_item_data["addons"][$key]["value"] = "Knop";
+                        }
+                        if ($cart_item_data_item["value"] == "Pushknop lange zijde") {
+                            $cart_item_data["addons"][$key]["value"] = "Pushknop";
+                        }
+                        if ($cart_item_data_item["name"] == "Extra knop korte kant") {
+                            //$cart_item_data["addons"][$key]["name"] = "Buitenzijde";
+                            unset($cart_item_data["addons"][$key]);
+                        }
                     }
                 }
+
+                $set_token = isset( $item['mc_set_token'] ) ? mc_sanitize_set_token( $item['mc_set_token'] ) : '';
+                if ( $set_token ) {
+                    $cart_item_data['mc_set_token'] = $set_token;
+                }
+
                 unset($_FILES);
                 WC()->cart->add_to_cart($item["add-to-cart"], $item["quantity"], 0, null, $cart_item_data);
             }

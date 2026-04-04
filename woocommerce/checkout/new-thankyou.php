@@ -150,6 +150,7 @@ $order = wc_get_order(intval($_GET["order"]));
 				if($productType == "cilinder") {
 					$cilinderCount += $order_item["quantity"];
 					for($i = 0; $i < $order_item["quantity"]; $i++) {
+                        $setLabel = mc_get_order_item_set_label( $order_item );
 						?>
                         <div class="checkout-products-data">
                             <div class="cilinder-config-options clearfix">
@@ -182,7 +183,7 @@ $order = wc_get_order(intval($_GET["order"]));
 	                            }
 	                            ?>
                                 <div class="cilinder-count-item active block-align-center">
-                                    <div class="cilinder-count-title">Cilinder</div>
+                                    <div class="cilinder-count-title"><?php if($setLabel) { ?><span class="mc-set-label"><?php echo esc_html( $setLabel ); ?></span><?php } ?>Cilinder</div>
 									<?php
 									//$image = wp_get_attachment_image_src( get_post_thumbnail_id( $_product->get_id() ), 'single-post-thumbnail' );
 									?>
@@ -245,6 +246,7 @@ $order = wc_get_order(intval($_GET["order"]));
 				$_product     = $order->get_product_from_item( $order_item );
 
 				if ( $_product && $_product->exists() && $order_item['quantity'] > 0 ) {
+                    $setLabel = mc_get_order_item_set_label( $order_item );
 					$categories = get_the_terms($_product->get_id(), 'product_cat');
 					if($cilinderCount == 0 || empty($categories))
 					{
@@ -262,6 +264,7 @@ $order = wc_get_order(intval($_GET["order"]));
                             <div class="cilinder-params clearfix">
                                 <div class="param-item">
                                     <div class="param-value">
+										<?php if($setLabel) { ?><div class="mc-set-label"><?php echo esc_html( $setLabel ); ?></div><?php } ?>
 										<?php echo $_product->get_title() . '&nbsp;'; ?>
 										<?php echo ' <strong class="product-quantity">' . sprintf( '&times; %s', $order_item['quantity'] ) . '</strong>'; ?>
                                     </div>

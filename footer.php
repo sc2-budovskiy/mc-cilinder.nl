@@ -152,7 +152,7 @@
 <?php } ?>
 <script src="<?php bloginfo('template_directory'); ?>/libs/slick/slick.min.js"></script>
 
-<script src="<?php bloginfo('template_directory'); ?>/js/main.js?v=21"></script>
+<script src="<?php bloginfo('template_directory'); ?>/js/main.js?v=22"></script>
 
 <?php wp_footer(); ?>
 <!--Это закрытие innerDiv-->

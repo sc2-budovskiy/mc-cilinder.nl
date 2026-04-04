@@ -117,6 +117,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			if($productType == "cilinder") {
 			    $cilinderCount += $cart_item["quantity"];
 			    for($i = 0; $i < $cart_item["quantity"]; $i++) {
+                    $setLabel = mc_get_cart_item_set_label( $cart_item );
 				    ?>
                     <div class="checkout-products-data">
                         <div class="cilinder-config-options clearfix">
@@ -150,7 +151,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	                        }
 	                        ?>
                             <div class="cilinder-count-item active block-align-center">
-                                <div class="cilinder-count-title">Cilinder</div>
+                                <div class="cilinder-count-title"><?php if($setLabel) { ?><span class="mc-set-label"><?php echo esc_html( $setLabel ); ?></span><?php } ?>Cilinder</div>
 							    <?php
 							    //$image = wp_get_attachment_image_src( get_post_thumbnail_id( $_product->get_id() ), 'single-post-thumbnail' );
 							    ?>
@@ -214,6 +215,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	        $_product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
 
 	        if ( $_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters( 'woocommerce_checkout_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
+                $setLabel = mc_get_cart_item_set_label( $cart_item );
 		        $image = wp_get_attachment_image_src( get_post_thumbnail_id( $_product->get_id() ), 'single-post-thumbnail' );
 		        ?>
                 <div class="checkout-products-data extra-products-data">
@@ -228,6 +230,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <div class="cilinder-params clearfix">
                             <div class="param-item">
                                 <div class="param-value">
+	                                <?php if($setLabel) { ?><div class="mc-set-label"><?php echo esc_html( $setLabel ); ?></div><?php } ?>
 	                                <?php echo apply_filters( 'woocommerce_cart_item_name', $_product->get_title(), $cart_item, $cart_item_key ) . '&nbsp;'; ?>
 	                                <?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times; %s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); ?>
                                 </div>
